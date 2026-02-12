@@ -1,7 +1,5 @@
 """Progress and status utilities for Drift CLI."""
 
-import sys
-import time
 from typing import Optional
 
 from rich.console import Console
@@ -25,7 +23,6 @@ class ProgressSpinner:
             self.live = Live(self.spinner, console=console, refresh_per_second=10)
             self.live.start()
         except Exception:
-            # Fallback for non-TTY environments
             console.print(f"[cyan]{self.message}[/cyan]", end="", flush=True)
 
     def stop(self, success: bool = True):
@@ -36,7 +33,6 @@ class ProgressSpinner:
             except Exception:
                 pass
         else:
-            # For non-TTY, add newline
             if not success:
                 console.print(" [red]✗[/red]")
             else:
@@ -48,10 +44,3 @@ class ProgressSpinner:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop(success=exc_type is None)
-
-
-def show_timeout_warning(seconds: int):
-    """Show warning about long operation."""
-    console.print(
-        f"[yellow]⏱  This may take {seconds} seconds or longer...[/yellow]"
-    )

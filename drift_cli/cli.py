@@ -2,15 +2,16 @@
 
 import os
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
+from rich.panel import Panel
 
 from drift_cli.commands.memory_cmd import memory_app
 from drift_cli.core.auto_setup import ensure_ollama_ready
 from drift_cli.core.config import ConfigManager
 from drift_cli.core.executor import Executor
+from drift_cli.core.first_run import is_first_run, run_setup_wizard
 from drift_cli.core.history import HistoryManager
 from drift_cli.core.memory import MemoryManager
 from drift_cli.core.ollama import OllamaClient
@@ -22,12 +23,28 @@ app = typer.Typer(
     name="drift",
     help="Terminal-native, safety-first AI assistant",
     add_completion=False,
+    invoke_without_command=True,
 )
 
 # Add memory subcommand
 app.add_typer(memory_app, name="memory")
 
 console = Console()
+
+
+@app.callback()
+def main(ctx: typer.Context):
+    """Drift — terminal-native, safety-first AI assistant."""
+    # First-run setup wizard
+    if is_first_run():
+        run_setup_wizard()
+        if ctx.invoked_subcommand is None:
+            raise typer.Exit(0)
+
+    # If no subcommand given, show help
+    if ctx.invoked_subcommand is None:
+        _show_help()
+        raise typer.Exit(0)
 
 
 def get_config() -> ConfigManager:
@@ -43,12 +60,7 @@ def get_ollama_client() -> OllamaClient:
 
 
 def check_ollama():
-    """Ensure Ollama is installed, running, and has the required model.
-
-    Respects auto_install_ollama, auto_start_ollama, and auto_pull_model
-    settings from ~/.drift/config.json. When enabled, missing prerequisites
-    are resolved automatically.
-    """
+    """Ensure Ollama is ready, using auto-setup config settings."""
     config = get_config().load()
     model = os.getenv("DRIFT_MODEL", config.model)
 
@@ -63,38 +75,22 @@ def check_ollama():
     if not ready:
         console.print()
         console.print("[bold]To fix manually:[/bold]")
-        console.print("1. [cyan]Install Ollama[/cyan]: https://ollama.com")
-        console.print("2. [cyan]Start Ollama[/cyan]: ollama serve")
-        console.print(f"3. [cyan]Pull the model[/cyan]: ollama pull {model}")
-        console.print()
-        console.print("[dim]To toggle auto-setup, edit ~/.drift/config.json:[/dim]")
-        console.print(
-            "[dim]  auto_install_ollama, auto_start_ollama, auto_pull_model[/dim]"
-        )
-        console.print()
+        console.print("  1. Install Ollama → https://ollama.com")
+        console.print("  2. Start Ollama   → ollama serve")
+        console.print(f"  3. Pull model     → ollama pull {model}")
         raise typer.Exit(1)
 
 
-def auto_cleanup_snapshots():
-    """Auto-cleanup snapshots if there are too many (silent, non-blocking)."""
+def _auto_cleanup_snapshots():
+    """Silently clean up snapshots if there are too many."""
     try:
-        from pathlib import Path
-
         snapshots_dir = Path.home() / ".drift" / "snapshots"
-
         if not snapshots_dir.exists():
             return
-
-        # Count snapshots
         snapshot_count = sum(1 for d in snapshots_dir.iterdir() if d.is_dir())
-
-        # Auto-cleanup if >100 snapshots (keep 50 most recent)
         if snapshot_count > 100:
-            hist = HistoryManager()
-            deleted = hist.cleanup_old_snapshots(keep=50, max_age_days=30)
-            # Silent cleanup, don't interrupt user
+            HistoryManager().cleanup_old_snapshots(keep=50, max_age_days=30)
     except Exception:
-        # If cleanup fails, don't break the app
         pass
 
 
@@ -107,25 +103,17 @@ def suggest(
     dry_run: bool = typer.Option(
         False, "--dry-run", "-d", help="Show dry-run only, don't execute"
     ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show detailed explanation"
+    ),
     no_memory: bool = typer.Option(
         False, "--no-memory", help="Disable memory/personalization for this query"
     ),
 ):
-    """Get AI-powered command suggestions from natural language.
+    """Get AI-powered command suggestions from natural language."""
+    _auto_cleanup_snapshots()
 
-    You can also use slash commands for quick context-aware actions:
-    - /git - Suggest git actions based on repo status
-    - /commit - Smart commit with AI-generated message
-    - /find <pattern> - Search files and content
-    - /help - Show all available slash commands
-    """
-    # Auto-cleanup old snapshots in background (if >100 exist)
-    auto_cleanup_snapshots()
-
-    # Initialize memory first (unless disabled)
     memory = None if no_memory else MemoryManager()
-
-    # Update context with current working directory
     if memory:
         memory.update_context(query=query)
 
@@ -134,27 +122,13 @@ def suggest(
     is_slash, enhanced_query, error = slash_handler.process_slash_command(query)
 
     if is_slash:
-        # Special handling for /help
         if query.strip().lower() == "/help":
-            help_text = slash_handler.get_help_text()
-            console.print(help_text)
+            console.print(slash_handler.get_help_text())
             return
-
-        # If there's an error (unknown command, missing requirements)
         if error:
             DriftUI.show_error(error)
             raise typer.Exit(1)
-
-        # Replace query with enhanced version
         query = enhanced_query
-
-        # Show what slash command was detected
-        command_name = (
-            query.split("\n")[0]
-            if "\n" in enhanced_query
-            else slash_handler.parse_slash_command(query)[0]
-        )
-        console.print(f"[dim]Using slash command: {command_name}[/dim]\n")
 
     check_ollama()
 
@@ -163,110 +137,65 @@ def suggest(
     history = HistoryManager()
 
     try:
-        # Get context
         context = executor.get_context()
 
-        # Enhance context with memory insights (if enabled)
+        # Silently enhance context with memory (no noisy output)
         if memory:
             context = memory.enhance_prompt_with_context(context)
 
-            # Show personalization indicator
-            if (
-                not is_slash
-            ):  # Don't show for slash commands (they already show context)
-                smart_defaults = memory.get_smart_defaults()
-                if (
-                    memory.preferences.favorite_tools
-                    or memory.context.detected_project_type
-                ):
-                    console.print("[dim]💡 Using personalized context[/dim]")
-
         # Get plan from Ollama
-        try:
-            from drift_cli.ui.progress import ProgressSpinner, show_timeout_warning
+        from drift_cli.ui.progress import ProgressSpinner
 
-            show_timeout_warning(90)
-            with ProgressSpinner("Analyzing your request..."):
-                plan = client.get_plan(query, context)
-        except ImportError:
-            DriftUI.show_info("Analyzing your request...")
+        with ProgressSpinner("Thinking..."):
             plan = client.get_plan(query, context)
 
-        # Show memory-enhanced suggestions before the plan
-        if memory and not is_slash:
-            DriftUI.show_memory_suggestions(memory, query)
-
-        # Check if clarification is needed
+        # Handle clarification
         if plan.clarification_needed:
             answers = DriftUI.ask_clarification(plan.clarification_needed)
-            # Re-query with clarification
             clarification_context = f"{context}\n\nClarifications:\n"
             for idx, answer in answers.items():
-                question = plan.clarification_needed[idx].question
-                clarification_context += f"Q: {question}\nA: {answer}\n"
+                clarification_context += f"Q: {plan.clarification_needed[idx].question}\nA: {answer}\n"
+            with ProgressSpinner("Re-analyzing..."):
+                plan = client.get_plan(query, clarification_context)
 
-            DriftUI.show_info("Re-analyzing with your input...")
-            plan = client.get_plan(query, clarification_context)
+        # Display plan (explanation only with --verbose)
+        DriftUI.show_plan(plan, query, show_explanation=verbose)
 
-        # Display the plan
-        DriftUI.show_plan(plan, query)
-
-        # Validate safety
+        # Safety check
         commands_list = [cmd.command for cmd in plan.commands]
         all_safe, warnings = SafetyChecker.validate_commands(commands_list)
 
         if warnings:
-            console.print()
             for warning in warnings:
                 console.print(warning)
 
         if not all_safe:
-            DriftUI.show_error("Some commands are blocked for safety. Aborting.")
+            DriftUI.show_error("Commands blocked for safety. Aborting.")
             history.add_entry(query, plan, executed=False)
             raise typer.Exit(1)
 
-        # Show preview
-        DriftUI.show_commands_preview(plan.commands)
-
-        # Confirm execution (unless --execute flag is set)
+        # Execute or confirm
         if dry_run:
-            DriftUI.show_info("Dry-run mode - no commands will be executed")
+            DriftUI.show_info("Dry-run mode — no commands executed")
             exit_code, output, _ = executor.execute_plan(plan, dry_run=True)
-            console.print()
-            console.print(output)
+            if output:
+                console.print(output)
             history.add_entry(query, plan, executed=False)
-
-            # Learn from rejection (user previewed but didn't execute)
             if memory:
                 memory.learn_from_execution(plan, executed=False, success=False)
-        elif execute or DriftUI.confirm_execution(plan.risk):
-            # Execute
-            exit_code, output, snapshot_id = executor.execute_plan(plan, dry_run=False)
 
-            # Show results
+        elif execute or DriftUI.confirm_execution(plan.risk):
+            exit_code, output, snapshot_id = executor.execute_plan(plan, dry_run=False)
             console.print()
             DriftUI.show_execution_result(exit_code, output)
-
-            # Save to history
-            history.add_entry(
-                query, plan, executed=True, exit_code=exit_code, snapshot_id=snapshot_id
-            )
-
-            # Learn from execution (success or failure)
+            history.add_entry(query, plan, executed=True, exit_code=exit_code, snapshot_id=snapshot_id)
             if memory:
-                memory.learn_from_execution(
-                    plan, executed=True, success=(exit_code == 0)
-                )
-
+                memory.learn_from_execution(plan, executed=True, success=(exit_code == 0))
             if snapshot_id and exit_code == 0:
-                DriftUI.show_info(
-                    f"Snapshot saved: {snapshot_id[:8]}... (use 'drift undo' to rollback)"
-                )
+                console.print(f"[dim]Snapshot: {snapshot_id[:8]}… (drift undo to rollback)[/dim]")
         else:
-            DriftUI.show_info("Execution cancelled")
+            DriftUI.show_info("Cancelled")
             history.add_entry(query, plan, executed=False)
-
-            # Learn from rejection
             if memory:
                 memory.learn_from_execution(plan, executed=False, success=False)
 
@@ -280,28 +209,19 @@ def suggest(
 @app.command()
 def find(query: str = typer.Argument(..., help="What to find")):
     """Smart file and content search."""
-    check_ollama()
-
-    # Build a specialized query for find operations
     find_query = f"Find: {query}. Use safe read-only commands like 'find', 'rg', 'grep', 'fd', or 'ls'. Do not modify any files."
-
-    suggest(query=find_query, execute=False, dry_run=False)
+    suggest(query=find_query, execute=False, dry_run=False, verbose=False)
 
 
 @app.command()
 def explain(command: str = typer.Argument(..., help="Command to explain")):
-    """Get a detailed explanation of a shell command."""
+    """Explain what a shell command does."""
     check_ollama()
-
     client = get_ollama_client()
-
     try:
-        DriftUI.show_info(f"Explaining: {command}")
-        console.print()
-
         explanation = client.explain_command(command)
+        console.print()
         console.print(explanation)
-
     except ValueError as e:
         DriftUI.show_error(str(e))
         raise typer.Exit(1)
@@ -366,196 +286,94 @@ def undo():
 
 @app.command()
 def cleanup(
-    keep: int = typer.Option(
-        50, "--keep", "-k", help="Number of recent snapshots to keep"
-    ),
-    days: int = typer.Option(
-        30, "--days", "-d", help="Delete snapshots older than this many days"
-    ),
-    auto: bool = typer.Option(
-        False, "--auto", "-a", help="Auto-cleanup without confirmation"
-    ),
+    keep: int = typer.Option(50, "--keep", "-k", help="Recent snapshots to keep"),
+    days: int = typer.Option(30, "--days", "-d", help="Max snapshot age in days"),
+    auto: bool = typer.Option(False, "--auto", "-a", help="Skip confirmation"),
 ):
     """Clean up old snapshots and free disk space."""
-    from pathlib import Path
-
     hist = HistoryManager()
-
-    # Show current disk usage
     snapshots_dir = Path.home() / ".drift" / "snapshots"
-    if snapshots_dir.exists():
-        total_size = sum(
-            f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file()
-        )
-        total_size_mb = total_size / (1024 * 1024)
 
-        console.print(
-            f"\n[cyan]Current snapshot storage: {total_size_mb:.2f} MB[/cyan]"
-        )
+    if not snapshots_dir.exists():
+        DriftUI.show_info("No snapshots to clean up")
+        return
 
-        snapshots = hist.list_snapshots()
-        console.print(f"[cyan]Total snapshots: {len(snapshots)}[/cyan]\n")
+    total_size = sum(f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file())
+    total_mb = total_size / (1024 * 1024)
+    snapshot_count = len(list(snapshots_dir.iterdir()))
+    console.print(f"[cyan]Snapshots: {snapshot_count} ({total_mb:.1f} MB)[/cyan]")
 
     if not auto:
-        console.print(
-            f"[yellow]This will delete snapshots older than {days} days (keeping {keep} most recent)[/yellow]"
-        )
-        if not typer.confirm("Proceed with cleanup?"):
-            DriftUI.show_info("Cleanup cancelled")
-            raise typer.Exit(0)
+        if not typer.confirm(f"Delete snapshots older than {days} days (keep {keep})?"):
+            return
 
     deleted = hist.cleanup_old_snapshots(keep=keep, max_age_days=days)
 
     if deleted > 0:
-        # Calculate new size
-        if snapshots_dir.exists():
-            new_size = sum(
-                f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file()
-            )
-            new_size_mb = new_size / (1024 * 1024)
-            freed_mb = total_size_mb - new_size_mb
-
-            DriftUI.show_success(f"Deleted {deleted} old snapshots")
-            console.print(f"[green]Freed {freed_mb:.2f} MB of disk space[/green]")
-            console.print(f"[dim]New storage: {new_size_mb:.2f} MB[/dim]")
-        else:
-            DriftUI.show_success(f"Deleted {deleted} old snapshots")
+        new_size = sum(f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file())
+        freed = total_mb - new_size / (1024 * 1024)
+        DriftUI.show_success(f"Deleted {deleted} snapshots, freed {freed:.1f} MB")
     else:
-        DriftUI.show_info("No snapshots to clean up")
+        DriftUI.show_info("Nothing to clean up")
 
 
 @app.command()
 def doctor():
-    """Diagnose and fix common terminal and environment issues."""
-    console.print("[bold cyan]Drift Doctor — System Diagnostics[/bold cyan]")
-    console.print()
-
+    """Diagnose and fix common issues."""
     from drift_cli.core.auto_setup import (
-        install_ollama,
-        is_model_available,
-        is_ollama_installed,
-        is_ollama_running,
-        pull_model,
-        start_ollama,
+        install_ollama, is_model_available, is_ollama_installed,
+        is_ollama_running, pull_model, start_ollama,
     )
+
+    console.print("[bold cyan]Drift Doctor[/bold cyan]\n")
 
     config = get_config().load()
     model = os.getenv("DRIFT_MODEL", config.model)
-    all_good = True
+    ok = True
 
-    # ── Ollama installation ──
-    console.print("[bold]Checking Ollama...[/bold]")
+    # Ollama binary
     if is_ollama_installed():
-        DriftUI.show_success("Ollama is installed")
+        DriftUI.show_success("Ollama installed")
+    elif config.auto_install_ollama:
+        ok = install_ollama() or False
     else:
-        all_good = False
-        if config.auto_install_ollama:
-            console.print("[yellow]  Ollama not found — auto-installing...[/yellow]")
-            if install_ollama():
-                DriftUI.show_success("Ollama installed")
-            else:
-                DriftUI.show_error(
-                    "Auto-install failed. Install manually: https://ollama.com"
-                )
-        else:
-            DriftUI.show_error("Ollama is not installed")
-            console.print("  Install from https://ollama.com")
-            console.print(
-                "  [dim]Or set auto_install_ollama: true in ~/.drift/config.json[/dim]"
-            )
+        ok = False
+        DriftUI.show_error("Ollama not installed → https://ollama.com")
 
-    # ── Ollama server ──
+    # Ollama server
     if is_ollama_installed():
         if is_ollama_running(config.ollama_url):
-            DriftUI.show_success("Ollama is running")
+            DriftUI.show_success("Ollama running")
+        elif config.auto_start_ollama:
+            if not start_ollama(config.ollama_url):
+                ok = False
         else:
-            all_good = False
-            if config.auto_start_ollama:
-                console.print("[yellow]  Ollama not running — starting...[/yellow]")
-                if start_ollama(config.ollama_url):
-                    DriftUI.show_success("Ollama started")
-                else:
-                    DriftUI.show_error("Failed to start Ollama. Try: ollama serve")
-            else:
-                DriftUI.show_warning("Ollama is not running")
-                console.print("  Start with: ollama serve")
-                console.print(
-                    "  [dim]Or set auto_start_ollama: true in ~/.drift/config.json[/dim]"
-                )
+            ok = False
+            DriftUI.show_warning("Ollama not running → ollama serve")
 
-    # ── Model ──
-    console.print()
-    console.print("[bold]Checking model...[/bold]")
-    console.print(f"  Configured: {model}")
-    if is_ollama_running(config.ollama_url):
+    # Model
+    if is_ollama_installed() and is_ollama_running(config.ollama_url):
         if is_model_available(model, config.ollama_url):
-            DriftUI.show_success(f"Model {model} is ready")
+            DriftUI.show_success(f"Model {model} ready")
+        elif config.auto_pull_model:
+            if not pull_model(model, config.ollama_url):
+                ok = False
         else:
-            all_good = False
-            if config.auto_pull_model:
-                console.print(
-                    f"[yellow]  Model {model} not found — pulling...[/yellow]"
-                )
-                if pull_model(model, config.ollama_url):
-                    DriftUI.show_success(f"Model {model} pulled")
-                else:
-                    DriftUI.show_error(
-                        f"Failed to pull {model}. Try: ollama pull {model}"
-                    )
-            else:
-                DriftUI.show_warning(f"Model {model} is not available")
-                console.print(f"  Pull with: ollama pull {model}")
-                console.print(
-                    "  [dim]Or set auto_pull_model: true in ~/.drift/config.json[/dim]"
-                )
-    elif is_ollama_installed():
-        DriftUI.show_warning("Cannot check model — Ollama is not running")
+            ok = False
+            DriftUI.show_warning(f"Model {model} missing → ollama pull {model}")
 
-    # ── Auto-setup settings ──
-    console.print()
-    console.print("[bold]Auto-setup settings...[/bold]")
-    console.print(
-        f"  auto_install_ollama: {'[green]ON[/green]' if config.auto_install_ollama else '[red]OFF[/red]'}"
-    )
-    console.print(
-        f"  auto_start_ollama:   {'[green]ON[/green]' if config.auto_start_ollama else '[red]OFF[/red]'}"
-    )
-    console.print(
-        f"  auto_pull_model:     {'[green]ON[/green]' if config.auto_pull_model else '[red]OFF[/red]'}"
-    )
-
-    # Check Drift directory
-    console.print()
-    console.print("[bold]Checking Drift directory...[/bold]")
+    # Drift directory
     drift_dir = Path.home() / ".drift"
     if drift_dir.exists():
-        DriftUI.show_success(f"Drift directory exists: {drift_dir}")
-        hist_file = drift_dir / "history.jsonl"
-        if hist_file.exists():
-            console.print(f"  History file: {hist_file}")
-        snapshots_dir = drift_dir / "snapshots"
-        if snapshots_dir.exists():
-            snapshot_count = len(list(snapshots_dir.iterdir()))
-            console.print(f"  Snapshots: {snapshot_count}")
+        DriftUI.show_success(f"Config: {drift_dir}")
     else:
-        DriftUI.show_warning(f"Drift directory not found: {drift_dir}")
-
-    # Check ZSH integration
-    console.print()
-    console.print("[bold]Checking ZSH integration...[/bold]")
-    zshrc = Path.home() / ".zshrc"
-    if zshrc.exists():
-        content = zshrc.read_text()
-        if "drift.zsh" in content:
-            DriftUI.show_success("drift.zsh is sourced in ~/.zshrc")
-        else:
-            DriftUI.show_warning("drift.zsh not found in ~/.zshrc")
-            console.print("  Run the installer to set it up")
-    else:
-        DriftUI.show_warning("~/.zshrc not found")
+        DriftUI.show_warning("No ~/.drift directory")
 
     console.print()
-    console.print("[dim]All checks complete[/dim]")
+    if ok:
+        console.print("[bold green]All checks passed[/bold green]")
+    else:
+        console.print("[yellow]Some issues remain — see above[/yellow]")
 
 
 @app.command()
@@ -564,6 +382,46 @@ def version():
     from drift_cli import __version__
 
     console.print(f"Drift CLI v{__version__}")
+
+
+@app.command()
+def setup():
+    """Re-run the first-time setup wizard."""
+    run_setup_wizard()
+
+
+def _show_help():
+    """Show a rich help screen with all commands."""
+    from drift_cli import __version__
+
+    console.print(f"\n[bold cyan]Drift CLI[/bold cyan] [dim]v{__version__}[/dim]")
+    console.print("[dim]Terminal-native, safety-first AI assistant[/dim]\n")
+
+    console.print(Panel(
+        "[cyan]drift suggest[/cyan] [dim]<query>[/dim]    AI command suggestions\n"
+        "[cyan]drift explain[/cyan] [dim]<cmd>[/dim]      Explain a shell command\n"
+        "[cyan]drift find[/cyan] [dim]<query>[/dim]       Smart file search\n"
+        "[cyan]drift history[/cyan]             View past commands\n"
+        "[cyan]drift again[/cyan]               Re-run last command\n"
+        "[cyan]drift undo[/cyan]                Rollback last execution\n"
+        "[cyan]drift cleanup[/cyan]             Free snapshot storage\n"
+        "[cyan]drift doctor[/cyan]              System health check\n"
+        "[cyan]drift memory show[/cyan]         View learned preferences\n"
+        "[cyan]drift setup[/cyan]               Run setup wizard\n"
+        "[cyan]drift version[/cyan]             Show version",
+        title="[bold]Commands[/bold]",
+        border_style="cyan",
+    ))
+
+    console.print(Panel(
+        "[dim]-e, --execute[/dim]    Run without confirmation\n"
+        "[dim]-d, --dry-run[/dim]    Preview only, don't execute\n"
+        "[dim]-v, --verbose[/dim]    Show detailed explanation\n"
+        "[dim]--no-memory[/dim]      Disable personalization",
+        title="[bold]Suggest Flags[/bold]",
+        border_style="dim",
+    ))
+    console.print()
 
 
 if __name__ == "__main__":
