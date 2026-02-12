@@ -23,8 +23,19 @@ from drift_cli.ui.display import DriftUI
 
 # Known subcommands for argv preprocessing
 _SUBCOMMANDS = {
-    "suggest", "find", "explain", "history", "again", "undo",
-    "cleanup", "doctor", "config", "uninstall", "version", "setup", "memory",
+    "suggest",
+    "find",
+    "explain",
+    "history",
+    "again",
+    "undo",
+    "cleanup",
+    "doctor",
+    "config",
+    "uninstall",
+    "version",
+    "setup",
+    "memory",
 }
 
 # Subcommands that accept a free-text query as their first positional arg

@@ -1,8 +1,9 @@
 """Tests for Ollama client (unit tests, no live Ollama required)."""
 
-import pytest
-from unittest.mock import patch, MagicMock
 import json
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from drift_cli.core.ollama import OllamaClient
 from drift_cli.models import RiskLevel
@@ -98,7 +99,9 @@ class TestOllamaAvailability:
 
     def test_is_not_available_when_down(self):
         client = OllamaClient()
-        with patch.object(client.client, "get", side_effect=Exception("Connection refused")):
+        with patch.object(
+            client.client, "get", side_effect=Exception("Connection refused")
+        ):
             assert client.is_available() is False
 
     def test_is_not_available_bad_status(self):
@@ -117,9 +120,7 @@ class TestGetPlan:
         """Create a mock httpx response with a plan JSON."""
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "response": json.dumps(plan_dict)
-        }
+        mock_response.json.return_value = {"response": json.dumps(plan_dict)}
         mock_response.raise_for_status = MagicMock()
         return mock_response
 
@@ -132,7 +133,9 @@ class TestGetPlan:
             "explanation": "Lists directory contents",
         }
 
-        with patch.object(client.client, "post", return_value=self._mock_ollama_response(plan_data)):
+        with patch.object(
+            client.client, "post", return_value=self._mock_ollama_response(plan_data)
+        ):
             plan = client.get_plan("list files", use_memory=False)
             assert plan.summary == "List files"
             assert plan.risk == RiskLevel.LOW
@@ -151,16 +154,22 @@ class TestGetPlan:
 
     def test_timeout_raises(self):
         import httpx
+
         client = OllamaClient()
 
-        with patch.object(client.client, "post", side_effect=httpx.TimeoutException("timeout")):
+        with patch.object(
+            client.client, "post", side_effect=httpx.TimeoutException("timeout")
+        ):
             with pytest.raises(ValueError, match="timed out"):
                 client.get_plan("test", use_memory=False)
 
     def test_http_error_raises(self):
         import httpx
+
         client = OllamaClient()
 
-        with patch.object(client.client, "post", side_effect=httpx.HTTPError("500 error")):
+        with patch.object(
+            client.client, "post", side_effect=httpx.HTTPError("500 error")
+        ):
             with pytest.raises(ValueError, match="Failed to communicate"):
                 client.get_plan("test", use_memory=False)

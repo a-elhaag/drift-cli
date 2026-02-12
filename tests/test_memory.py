@@ -1,16 +1,13 @@
 """Tests for memory and context management."""
 
 import json
-import pytest
-from pathlib import Path
 from dataclasses import asdict
+from pathlib import Path
 
-from drift_cli.core.memory import (
-    MemoryManager,
-    UserPreference,
-    UserContext,
-)
-from drift_cli.models import Plan, Command, RiskLevel, HistoryEntry
+import pytest
+
+from drift_cli.core.memory import MemoryManager, UserContext, UserPreference
+from drift_cli.models import Command, HistoryEntry, Plan, RiskLevel
 
 
 def _make_plan(risk=RiskLevel.LOW, commands=None):
@@ -84,7 +81,9 @@ class TestMemoryManager:
         mm = MemoryManager(drift_dir=tmp_path, use_project_memory=False)
 
         history = [
-            _make_entry(commands=[Command(command="git status", description="check status")]),
+            _make_entry(
+                commands=[Command(command="git status", description="check status")]
+            ),
             _make_entry(commands=[Command(command="git log", description="view log")]),
             _make_entry(commands=[Command(command="git push", description="push")]),
             _make_entry(commands=[Command(command="ls -la", description="list")]),
@@ -131,7 +130,9 @@ class TestMemoryManager:
     def test_learn_from_execution_success(self, tmp_path):
         """Successful execution should learn tool preferences."""
         mm = MemoryManager(drift_dir=tmp_path, use_project_memory=False)
-        plan = _make_plan(commands=[Command(command="docker build .", description="build")])
+        plan = _make_plan(
+            commands=[Command(command="docker build .", description="build")]
+        )
 
         mm.learn_from_execution(plan, executed=True, success=True)
         assert "docker" in mm.preferences.favorite_tools
@@ -139,7 +140,9 @@ class TestMemoryManager:
     def test_learn_from_execution_rejected(self, tmp_path):
         """Rejected commands should be tracked as avoided."""
         mm = MemoryManager(drift_dir=tmp_path, use_project_memory=False)
-        plan = _make_plan(commands=[Command(command="rm -rf build/", description="clean")])
+        plan = _make_plan(
+            commands=[Command(command="rm -rf build/", description="clean")]
+        )
 
         mm.learn_from_execution(plan, executed=False, success=False)
         assert "rm -rf build/" in mm.preferences.avoided_patterns

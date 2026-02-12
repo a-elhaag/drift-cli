@@ -4,8 +4,8 @@ import pytest
 
 from drift_cli.core.slash_commands import (
     SlashCommand,
-    SlashCommandRegistry,
     SlashCommandHandler,
+    SlashCommandRegistry,
 )
 
 

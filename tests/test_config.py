@@ -1,10 +1,11 @@
 """Tests for configuration management."""
 
 import json
-import pytest
 from pathlib import Path
 
-from drift_cli.core.config import DriftConfig, ConfigManager
+import pytest
+
+from drift_cli.core.config import ConfigManager, DriftConfig
 
 
 class TestDriftConfig:

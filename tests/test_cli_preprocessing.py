@@ -1,9 +1,10 @@
 """Tests for CLI argument preprocessing."""
 
 import sys
+
 import pytest
 
-from drift_cli.cli import _preprocess_argv, _SUBCOMMANDS
+from drift_cli.cli import _SUBCOMMANDS, _preprocess_argv
 
 
 class TestPreprocessArgv:
@@ -95,6 +96,16 @@ class TestPreprocessArgv:
 
     def test_all_subcommands_recognized(self):
         """Sanity: known subcommands set should include the important ones."""
-        for cmd in ["suggest", "find", "explain", "history", "doctor",
-                     "config", "undo", "again", "version", "memory"]:
+        for cmd in [
+            "suggest",
+            "find",
+            "explain",
+            "history",
+            "doctor",
+            "config",
+            "undo",
+            "again",
+            "version",
+            "memory",
+        ]:
             assert cmd in _SUBCOMMANDS

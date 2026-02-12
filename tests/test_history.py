@@ -1,12 +1,13 @@
 """Tests for history and snapshot management."""
 
 import json
-import pytest
-from pathlib import Path
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 from drift_cli.core.history import HistoryManager
-from drift_cli.models import Plan, Command, RiskLevel, HistoryEntry
+from drift_cli.models import Command, HistoryEntry, Plan, RiskLevel
 
 
 def _make_plan(summary="test plan", risk=RiskLevel.LOW):
@@ -25,7 +26,9 @@ class TestHistoryAddAndRetrieve:
     def test_add_entry(self, tmp_path):
         """Adding an entry should persist it."""
         hm = HistoryManager(drift_dir=tmp_path)
-        entry = hm.add_entry(query="list files", plan=_make_plan(), executed=True, exit_code=0)
+        entry = hm.add_entry(
+            query="list files", plan=_make_plan(), executed=True, exit_code=0
+        )
 
         assert isinstance(entry, HistoryEntry)
         assert entry.query == "list files"
