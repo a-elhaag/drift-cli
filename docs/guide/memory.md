@@ -11,7 +11,7 @@ Every time you use Drift, it observes:
 - **Common workflows** — What do you search for? What kind of projects do you work on?
 - **Project context** — Different preferences per project directory
 
-This data is stored locally in `~/.drift/memory/` and **never leaves your machine**.
+This data is stored locally in `~/.drift/` and **never leaves your machine**.
 
 ## Commands
 
@@ -42,10 +42,10 @@ This permanently deletes all learned preferences. Drift starts fresh.
 
 ```bash
 # Backup your preferences
-drift memory export > drift-memory.json
+drift memory export drift-memory.json
 
 # Restore on another machine
-drift memory import < drift-memory.json
+drift memory import drift-memory.json
 ```
 
 ### View Projects
@@ -68,7 +68,7 @@ Lists all project directories where Drift has observed your patterns.
 
 ## Privacy
 
-- All memory is stored in `~/.drift/memory/` as JSON files
+- Memory is stored in `~/.drift/memory.json`, `~/.drift/context.json`, and `~/.drift/projects/*.json`
 - Data is **never** sent to any remote server
 - You can inspect, edit, or delete the files directly
 - `drift memory reset` clears everything

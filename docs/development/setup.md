@@ -16,8 +16,8 @@ cd drift-cli
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Install in development mode with dev dependencies
-pip install -e ".[dev]"
+# Install in development mode with dev + test dependencies
+pip install -e ".[dev,test]"
 ```
 
 ## Project Structure
@@ -43,9 +43,13 @@ drift-cli/
 │       └── progress.py     # Progress spinners
 ├── tests/
 │   ├── conftest.py         # Shared fixtures
-│   ├── test_models.py      # Model validation tests
+│   ├── test_auto_setup.py  # Auto-setup behavior tests
+│   ├── test_executor.py    # Executor behavior tests
+│   ├── test_history.py     # History and snapshot tests
+│   ├── test_memory.py      # Memory merge/context tests
 │   ├── test_safety.py      # Safety engine tests
-│   └── test_executor_integration.py  # Executor tests
+│   ├── test_slash_commands.py  # Slash command tests
+│   └── test_system_update.py   # Update command failure-mode tests
 ├── pyproject.toml
 ├── Makefile
 └── mkdocs.yml
@@ -71,10 +75,10 @@ pytest tests/test_safety.py -v
 
 ```bash
 # Check
-ruff check drift_cli/
+ruff check drift_cli tests
 
 # Format
-ruff format drift_cli/
+ruff format drift_cli tests
 
 # Or use Make
 make lint

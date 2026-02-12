@@ -156,8 +156,8 @@ drift memory reset
 Export or import memory data for backup or transfer.
 
 ```bash
-drift memory export > my-prefs.json
-drift memory import < my-prefs.json
+drift memory export my-prefs.json
+drift memory import my-prefs.json
 ```
 
 ### `drift memory projects`

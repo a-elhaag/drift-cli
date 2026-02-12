@@ -66,4 +66,6 @@ Or edit `~/.drift/config.json`:
 | `~/.drift/history.jsonl` | Command history (append-only) |
 | `~/.drift/snapshots/`    | File snapshots for undo       |
 | `~/.drift/drift.zsh`     | ZSH integration script        |
-| `~/.drift/memory/`       | Learned user preferences      |
+| `~/.drift/memory.json`   | Global learned preferences    |
+| `~/.drift/context.json`  | Session/context metadata      |
+| `~/.drift/projects/`     | Project-specific preferences  |
