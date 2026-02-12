@@ -454,11 +454,15 @@ def doctor():
             if install_ollama():
                 DriftUI.show_success("Ollama installed")
             else:
-                DriftUI.show_error("Auto-install failed. Install manually: https://ollama.com")
+                DriftUI.show_error(
+                    "Auto-install failed. Install manually: https://ollama.com"
+                )
         else:
             DriftUI.show_error("Ollama is not installed")
             console.print("  Install from https://ollama.com")
-            console.print("  [dim]Or set auto_install_ollama: true in ~/.drift/config.json[/dim]")
+            console.print(
+                "  [dim]Or set auto_install_ollama: true in ~/.drift/config.json[/dim]"
+            )
 
     # ── Ollama server ──
     if is_ollama_installed():
@@ -475,7 +479,9 @@ def doctor():
             else:
                 DriftUI.show_warning("Ollama is not running")
                 console.print("  Start with: ollama serve")
-                console.print("  [dim]Or set auto_start_ollama: true in ~/.drift/config.json[/dim]")
+                console.print(
+                    "  [dim]Or set auto_start_ollama: true in ~/.drift/config.json[/dim]"
+                )
 
     # ── Model ──
     console.print()
@@ -487,15 +493,21 @@ def doctor():
         else:
             all_good = False
             if config.auto_pull_model:
-                console.print(f"[yellow]  Model {model} not found — pulling...[/yellow]")
+                console.print(
+                    f"[yellow]  Model {model} not found — pulling...[/yellow]"
+                )
                 if pull_model(model, config.ollama_url):
                     DriftUI.show_success(f"Model {model} pulled")
                 else:
-                    DriftUI.show_error(f"Failed to pull {model}. Try: ollama pull {model}")
+                    DriftUI.show_error(
+                        f"Failed to pull {model}. Try: ollama pull {model}"
+                    )
             else:
                 DriftUI.show_warning(f"Model {model} is not available")
                 console.print(f"  Pull with: ollama pull {model}")
-                console.print("  [dim]Or set auto_pull_model: true in ~/.drift/config.json[/dim]")
+                console.print(
+                    "  [dim]Or set auto_pull_model: true in ~/.drift/config.json[/dim]"
+                )
     elif is_ollama_installed():
         DriftUI.show_warning("Cannot check model — Ollama is not running")
 
