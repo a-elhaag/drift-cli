@@ -426,57 +426,80 @@ def cleanup(
 
 @app.command()
 def doctor():
-    """Diagnose common terminal and environment issues."""
-    console.print("[bold cyan]Drift Doctor - System Diagnostics[/bold cyan]")
+    """Diagnose and fix common terminal and environment issues."""
+    console.print("[bold cyan]Drift Doctor — System Diagnostics[/bold cyan]")
     console.print()
 
-    # Check Ollama installation
     from drift_cli.core.auto_setup import (
+        install_ollama,
         is_model_available,
         is_ollama_installed,
         is_ollama_running,
+        pull_model,
+        start_ollama,
     )
 
-    console.print("[bold]Checking Ollama...[/bold]")
     config = get_config().load()
     model = os.getenv("DRIFT_MODEL", config.model)
+    all_good = True
 
+    # ── Ollama installation ──
+    console.print("[bold]Checking Ollama...[/bold]")
     if is_ollama_installed():
         DriftUI.show_success("Ollama is installed")
     else:
-        DriftUI.show_error("Ollama is not installed")
-        console.print("  Install from https://ollama.com")
+        all_good = False
         if config.auto_install_ollama:
-            console.print(
-                "  [dim]auto_install_ollama is ON — will install on next command[/dim]"
-            )
+            console.print("[yellow]  Ollama not found — auto-installing...[/yellow]")
+            if install_ollama():
+                DriftUI.show_success("Ollama installed")
+            else:
+                DriftUI.show_error("Auto-install failed. Install manually: https://ollama.com")
+        else:
+            DriftUI.show_error("Ollama is not installed")
+            console.print("  Install from https://ollama.com")
+            console.print("  [dim]Or set auto_install_ollama: true in ~/.drift/config.json[/dim]")
 
-    if is_ollama_running(config.ollama_url):
-        DriftUI.show_success("Ollama is running")
-    else:
-        DriftUI.show_warning("Ollama is not running")
-        console.print("  Start with: ollama serve")
-        if config.auto_start_ollama:
-            console.print(
-                "  [dim]auto_start_ollama is ON — will start on next command[/dim]"
-            )
+    # ── Ollama server ──
+    if is_ollama_installed():
+        if is_ollama_running(config.ollama_url):
+            DriftUI.show_success("Ollama is running")
+        else:
+            all_good = False
+            if config.auto_start_ollama:
+                console.print("[yellow]  Ollama not running — starting...[/yellow]")
+                if start_ollama(config.ollama_url):
+                    DriftUI.show_success("Ollama started")
+                else:
+                    DriftUI.show_error("Failed to start Ollama. Try: ollama serve")
+            else:
+                DriftUI.show_warning("Ollama is not running")
+                console.print("  Start with: ollama serve")
+                console.print("  [dim]Or set auto_start_ollama: true in ~/.drift/config.json[/dim]")
 
-    # Check model
+    # ── Model ──
     console.print()
     console.print("[bold]Checking model...[/bold]")
-    console.print(f"  Default model: {model}")
+    console.print(f"  Configured: {model}")
     if is_ollama_running(config.ollama_url):
         if is_model_available(model, config.ollama_url):
-            DriftUI.show_success(f"Model {model} is available")
+            DriftUI.show_success(f"Model {model} is ready")
         else:
-            DriftUI.show_warning(f"Model {model} is not pulled")
-            console.print(f"  Pull with: ollama pull {model}")
+            all_good = False
             if config.auto_pull_model:
-                console.print(
-                    "  [dim]auto_pull_model is ON — will pull on next command[/dim]"
-                )
+                console.print(f"[yellow]  Model {model} not found — pulling...[/yellow]")
+                if pull_model(model, config.ollama_url):
+                    DriftUI.show_success(f"Model {model} pulled")
+                else:
+                    DriftUI.show_error(f"Failed to pull {model}. Try: ollama pull {model}")
+            else:
+                DriftUI.show_warning(f"Model {model} is not available")
+                console.print(f"  Pull with: ollama pull {model}")
+                console.print("  [dim]Or set auto_pull_model: true in ~/.drift/config.json[/dim]")
+    elif is_ollama_installed():
+        DriftUI.show_warning("Cannot check model — Ollama is not running")
 
-    # Auto-setup status
+    # ── Auto-setup settings ──
     console.print()
     console.print("[bold]Auto-setup settings...[/bold]")
     console.print(
