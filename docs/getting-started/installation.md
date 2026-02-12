@@ -10,7 +10,18 @@
 
 ## Install Ollama
 
-Drift uses [Ollama](https://ollama.com) for local LLM inference. Install it first:
+Drift uses [Ollama](https://ollama.com) for local LLM inference.
+
+!!! success "Auto-Setup (default)"
+    **You don't need to install Ollama manually.** When you run any `drift` command for the first time, it will automatically:
+
+    1. Install Ollama (via Homebrew on macOS, or the official script on Linux)
+    2. Start the Ollama server
+    3. Pull the default model (`qwen2.5-coder:1.5b`)
+
+    To disable this, set `auto_install_ollama`, `auto_start_ollama`, or `auto_pull_model` to `false` in `~/.drift/config.json`.
+
+If you prefer to install manually:
 
 ```bash
 # macOS — download from ollama.com or:
@@ -57,9 +68,13 @@ drift doctor
 Expected output:
 
 ```
+✓ Ollama is installed
 ✓ Ollama is running
+✓ Model qwen2.5-coder:1.5b is available
+  auto_install_ollama: ON
+  auto_start_ollama:   ON
+  auto_pull_model:     ON
 ✓ Drift directory exists (~/.drift)
-✓ Model available: qwen2.5-coder:1.5b
 ```
 
 ## ZSH Integration (Optional)

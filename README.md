@@ -16,13 +16,17 @@ A terminal-native, safety-first AI assistant that integrates directly into your 
 
 ```bash
 # Install Drift CLI
-./install.sh
+git clone https://github.com/a-elhaag/drift-cli.git
+cd drift-cli
+pip install -e .
 
-# Restart your terminal, then try:
+# Just run it — Drift auto-installs Ollama & pulls the model on first use
 drift suggest "find all python files modified today"
 drift explain "tar -czf archive.tar.gz src/"
 drift doctor
 ```
+
+> **Zero setup**: Drift automatically installs Ollama, starts the server, and pulls the model on first run. Configure via `~/.drift/config.json`.
 
 ## Commands
 
