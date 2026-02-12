@@ -21,8 +21,8 @@ cd drift-cli
 pip install -e .
 
 # Just run it — Drift auto-installs Ollama & pulls the model on first use
-drift suggest "find all python files modified today"
-drift explain "tar -czf archive.tar.gz src/"
+drift suggest find all python files modified today
+drift explain tar -czf archive.tar.gz src/
 drift doctor
 ```
 
@@ -32,9 +32,9 @@ drift doctor
 
 | Command                     | Description                           |
 | --------------------------- | ------------------------------------- |
-| `drift suggest "<query>"`   | Get AI-powered command suggestions    |
-| `drift find "<query>"`      | Smart file and content search         |
-| `drift explain "<command>"` | Understand what a command does        |
+| `drift suggest <query>`      | Get AI-powered command suggestions    |
+| `drift find <query>`         | Smart file and content search         |
+| `drift explain <command>`    | Understand what a command does        |
 | `drift history`             | View your Drift command history       |
 | `drift again`               | Re-run the last Drift command         |
 | `drift undo`                | Restore files from the last operation |
@@ -119,9 +119,6 @@ executor.execute("touch test.txt")  # Only creates file inside sandbox
 ```bash
 # Install in development mode
 pip install -e ".[dev]"
-
-# Run tests
-make test
 
 # Lint
 make lint

@@ -33,12 +33,11 @@ Be respectful, inclusive, and constructive. We're all here to make the terminal 
 1. **Fork and clone** the repository
 2. **Create a branch**: `git checkout -b feature/my-feature`
 3. **Make changes** following our code style
-4. **Add tests** for new functionality
-5. **Update documentation** if needed
-6. **Run tests**: `make test`
-7. **Format code**: `make format`
-8. **Commit** with clear messages
-9. **Push** and create a PR
+4. **Update documentation** if needed
+5. **Format code**: `make format`
+6. **Lint**: `make lint`
+7. **Commit** with clear messages
+8. **Push** and create a PR
 
 ## Development Setup
 
@@ -50,11 +49,11 @@ cd drift-cli
 # Install in development mode
 make dev
 
-# Run tests
-make test
-
 # Check linting
 make lint
+
+# Format code
+make format
 ```
 
 ## Code Style
@@ -67,22 +66,20 @@ make lint
 
 ## Testing
 
-- Write tests for all new features
-- Maintain test coverage above 80%
-- Use pytest fixtures for common setups
+Tests are planned for future development. When contributing:
+
+- Manually verify new features work as expected
 - Test both success and failure cases
+- Use `--dry-run` mode during development
 
 ### Running Tests
 
 ```bash
-# All tests
-make test
+# Lint check
+make lint
 
-# With coverage
-make test-cov
-
-# Specific test
-pytest tests/test_safety.py -v
+# Format code
+make format
 ```
 
 ## Architecture Guidelines
@@ -93,7 +90,6 @@ pytest tests/test_safety.py -v
 2. Use Typer decorators and type hints
 3. Add safety checks if needed
 4. Update help text and README
-5. Add tests in `tests/`
 
 Example:
 ```python
@@ -111,8 +107,7 @@ def mycommand(
 
 1. Update `drift_cli/core/safety.py`
 2. Add patterns to appropriate list
-3. Add tests in `tests/test_safety.py`
-4. Document in SECURITY.md
+3. Document in SECURITY.md
 
 ### Changing the LLM Prompt
 

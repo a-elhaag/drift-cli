@@ -7,7 +7,7 @@
 Convert natural language to shell commands.
 
 ```bash
-drift suggest "<query>" [--dry-run]
+drift suggest <query> [--dry-run]
 ```
 
 | Flag        | Description                     |
@@ -17,9 +17,9 @@ drift suggest "<query>" [--dry-run]
 **Examples:**
 
 ```bash
-drift suggest "find all files larger than 100MB"
-drift suggest "compress all .log files into an archive" --dry-run
-drift suggest "set up a Python virtual environment"
+drift suggest find all files larger than 100MB
+drift suggest compress all .log files into an archive --dry-run
+drift suggest set up a Python virtual environment
 ```
 
 ---
@@ -29,15 +29,15 @@ drift suggest "set up a Python virtual environment"
 Smart, read-only file and content search. Always safe — never modifies anything.
 
 ```bash
-drift find "<query>"
+drift find <query>
 ```
 
 **Examples:**
 
 ```bash
-drift find "all TODO comments in Python files"
-drift find "configuration files"
-drift find "largest files in this project"
+drift find all TODO comments in Python files
+drift find configuration files
+drift find largest files in this project
 ```
 
 ---
@@ -47,15 +47,15 @@ drift find "largest files in this project"
 Get a detailed breakdown of any shell command.
 
 ```bash
-drift explain "<command>"
+drift explain <command>
 ```
 
 **Examples:**
 
 ```bash
-drift explain "tar -czf archive.tar.gz src/"
-drift explain "find . -name '*.py' -exec grep -l 'import os' {} +"
-drift explain "awk '{print $1}' /var/log/syslog | sort | uniq -c | sort -rn"
+drift explain tar -czf archive.tar.gz src/
+drift explain find . -name '*.py' -exec grep -l 'import os' {} +
+drift explain awk '{print $1}' /var/log/syslog | sort | uniq -c | sort -rn
 ```
 
 ---

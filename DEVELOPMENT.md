@@ -36,23 +36,10 @@ drift-cli/
 │   │   └── display.py  # Rich-based UI
 │   ├── cli.py          # Main CLI application
 │   └── models.py       # Pydantic models
-├── tests/              # Test suite
+├── tests/              # Test suite (coming soon)
 ├── drift.zsh           # ZSH integration
 ├── install.sh          # Installer script
 └── pyproject.toml      # Project metadata
-```
-
-## Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=drift_cli --cov-report=html
-
-# Run specific test file
-pytest tests/test_safety.py
 ```
 
 ## Code Style
@@ -78,8 +65,8 @@ def mycommand(arg: str = typer.Argument(..., help="Description")):
     # Implementation
 ```
 
-2. Add tests in `tests/test_cli.py`
-3. Update README.md with new command
+2. Add the command to README.md
+3. Update docs/guide/commands.md with new command
 
 ## Modifying Safety Rules
 
@@ -122,7 +109,7 @@ if client.is_available():
 
 1. Update version in `drift_cli/__init__.py`
 2. Update CHANGELOG.md
-3. Run tests: `pytest`
+3. Lint: `ruff check drift_cli/`
 4. Build: `python -m build`
 5. Tag release: `git tag v0.1.0`
 6. Push: `git push --tags`

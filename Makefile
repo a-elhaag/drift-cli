@@ -1,11 +1,10 @@
-.PHONY: help install dev test lint format clean run doctor
+.PHONY: help install dev lint format clean run doctor
 
 help:
 	@echo "Drift CLI - Development Commands"
 	@echo ""
 	@echo "  make install    - Install Drift CLI"
 	@echo "  make dev        - Setup development environment"
-	@echo "  make test       - Run tests"
 	@echo "  make lint       - Run linter"
 	@echo "  make format     - Format code"
 	@echo "  make clean      - Remove build artifacts"
@@ -20,14 +19,6 @@ dev:
 	@echo "Setting up development environment..."
 	pip install -e ".[dev]"
 	@echo "✓ Development environment ready"
-
-test:
-	@echo "Running tests..."
-	pytest tests/ -v
-
-test-cov:
-	@echo "Running tests with coverage..."
-	pytest tests/ --cov=drift_cli --cov-report=html --cov-report=term
 
 lint:
 	@echo "Running linter..."

@@ -5,7 +5,7 @@ After [installing Drift](installation.md), try these commands to get a feel for 
 ## Your First Suggestion
 
 ```bash
-drift suggest "find all python files modified today"
+drift suggest find all python files modified today
 ```
 
 Drift queries the local LLM, generates a plan, and shows you a preview:
@@ -28,7 +28,7 @@ Type `y` to run it, or `n` to cancel.
 Not sure you trust it yet? Use `--dry-run`:
 
 ```bash
-drift suggest "reorganize my project" --dry-run
+drift suggest reorganize my project --dry-run
 ```
 
 This shows the plan but **never executes anything** — no matter what you type.
@@ -38,7 +38,7 @@ This shows the plan but **never executes anything** — no matter what you type.
 Don't know what a command does? Ask Drift:
 
 ```bash
-drift explain "tar -czf archive.tar.gz src/"
+drift explain tar -czf archive.tar.gz src/
 ```
 
 Output:
