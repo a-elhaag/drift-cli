@@ -13,7 +13,7 @@
 Drift uses [Ollama](https://ollama.com) for local LLM inference.
 
 !!! success "Auto-Setup (default)"
-    **You don't need to install Ollama manually.** When you run any `drift` command for the first time, it will automatically:
+**You don't need to install Ollama manually.** When you run any `drift` command for the first time, it will automatically:
 
     1. Install Ollama (via Homebrew on macOS, or the official script on Linux)
     2. Start the Ollama server
