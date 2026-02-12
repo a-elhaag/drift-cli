@@ -1,0 +1,8 @@
+{
+  "model": "qwen2.5-coder:1.5b",
+  "ollama_url": "http://localhost:11434",
+  "temperature": 0.1,
+  "top_p": 0.9,
+  "max_history": 100,
+  "auto_snapshot": true
+}
