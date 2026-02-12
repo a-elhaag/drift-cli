@@ -113,7 +113,8 @@ if ! command -v pipx &> /dev/null; then
     print_status "Installing pipx..."
     python3 -m pip install --user pipx
     python3 -m pipx ensurepath
-    export PATH="$HOME/.local/bin:$PATH"
+    # Add both possible pip --user bin directories to PATH
+    export PATH="$HOME/.local/bin:$HOME/Library/Python/$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')/bin:$PATH"
 fi
 
 # Get the directory where this script is located
@@ -123,11 +124,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
     # Installing from source
     print_status "Installing from source..."
-    pipx install -e "$SCRIPT_DIR" --force
+    python3 -m pipx install -e "$SCRIPT_DIR" --force
 else
     # Installing from PyPI (future)
     print_status "Installing from PyPI..."
-    pipx install drift-cli --force
+    python3 -m pipx install drift-cli --force
 fi
 
 print_success "Drift CLI installed"
