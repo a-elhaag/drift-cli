@@ -27,7 +27,7 @@ dev = [
 ]
 
 [project.scripts]
-drift = "drift_cli.cli:app"
+drift = "drift_cli.cli:main_entry"
 
 [tool.setuptools.packages.find]
 include = ["drift_cli*"]

@@ -1,7 +1,9 @@
 """Main CLI application using Typer."""
 
 import os
+import sys
 from pathlib import Path
+from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -19,6 +21,45 @@ from drift_cli.core.safety import SafetyChecker
 from drift_cli.core.slash_commands import SlashCommandHandler
 from drift_cli.ui.display import DriftUI
 
+# Known subcommands for argv preprocessing
+_SUBCOMMANDS = {
+    "suggest", "find", "explain", "history", "again", "undo",
+    "cleanup", "doctor", "config", "uninstall", "version", "setup", "memory",
+}
+
+# Subcommands that accept a free-text query as their first positional arg
+_QUERY_SUBCOMMANDS = {"suggest", "find", "explain"}
+
+
+def _preprocess_argv():
+    """Normalize sys.argv so multi-word queries work without quotes.
+
+    Handles three cases:
+      1. drift list all files        → drift suggest "list all files"
+      2. drift find js files          → drift find "js files"
+      3. drift suggest -d list files  → drift suggest -d "list files"
+    """
+    args = sys.argv[1:]
+    if not args:
+        return
+
+    # Case 1: first non-option arg is NOT a known subcommand
+    #         → treat everything as a query for 'suggest'
+    first = args[0]
+    if not first.startswith("-") and first not in _SUBCOMMANDS:
+        query = " ".join(args)
+        sys.argv = [sys.argv[0], "suggest", query]
+        return
+
+    # Case 2 & 3: subcommand that takes a query + multiple trailing words
+    if first in _QUERY_SUBCOMMANDS and len(args) > 1:
+        options = [a for a in args[1:] if a.startswith("-")]
+        positional = [a for a in args[1:] if not a.startswith("-")]
+        if len(positional) > 1:
+            query = " ".join(positional)
+            sys.argv = [sys.argv[0], first] + options + [query]
+
+
 app = typer.Typer(
     name="drift",
     help="Terminal-native, safety-first AI assistant",
@@ -33,25 +74,15 @@ console = Console()
 
 
 @app.callback(invoke_without_command=True)
-def main(
-    ctx: typer.Context,
-    query: str = typer.Argument(
-        None, help="Natural language query (shortcut for 'drift suggest')"
-    ),
-):
+def main(ctx: typer.Context):
     """Drift — terminal-native, safety-first AI assistant."""
     # First-run setup wizard
     if is_first_run():
         run_setup_wizard()
-        if ctx.invoked_subcommand is None and not query:
+        if ctx.invoked_subcommand is None:
             raise typer.Exit(0)
 
-    # If a query is given without a subcommand, treat it as 'suggest'
-    if ctx.invoked_subcommand is None and query:
-        suggest(query=query)
-        raise typer.Exit(0)
-
-    # No subcommand and no query → show help
+    # No subcommand → show help (queries are rewritten to 'suggest' by _preprocess_argv)
     if ctx.invoked_subcommand is None:
         _show_help()
         raise typer.Exit(0)
@@ -602,5 +633,11 @@ def _show_help():
     console.print()
 
 
-if __name__ == "__main__":
+def main_entry():
+    """Entry point that preprocesses argv, then runs the Typer app."""
+    _preprocess_argv()
     app()
+
+
+if __name__ == "__main__":
+    main_entry()
