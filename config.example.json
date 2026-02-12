@@ -4,5 +4,8 @@
   "temperature": 0.1,
   "top_p": 0.9,
   "max_history": 100,
-  "auto_snapshot": true
+  "auto_snapshot": true,
+  "auto_install_ollama": true,
+  "auto_start_ollama": true,
+  "auto_pull_model": true
 }

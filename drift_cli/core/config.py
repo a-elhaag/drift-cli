@@ -16,6 +16,9 @@ class DriftConfig(BaseModel):
     top_p: float = 0.9
     max_history: int = 100
     auto_snapshot: bool = True
+    auto_install_ollama: bool = True
+    auto_start_ollama: bool = True
+    auto_pull_model: bool = True
 
 
 class ConfigManager:
