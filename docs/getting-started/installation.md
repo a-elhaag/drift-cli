@@ -2,11 +2,17 @@
 
 ## Prerequisites
 
-| Requirement | Version | Notes                        |
-| ----------- | ------- | ---------------------------- |
-| **macOS**   | 12+     | Linux support planned        |
-| **Python**  | 3.9+    | `python3 --version` to check |
-| **Ollama**  | Latest  | Local LLM runtime            |
+| Requirement | Version | Notes |
+| ----------- | ------- | ----- |
+| **OS** | macOS 12+ or modern Linux | Windows is not supported yet |
+| **Python** | 3.9+ | `python3 --version` to check |
+| **Ollama** | Latest | Local LLM runtime |
+| **Shell** | Any | ZSH is only needed for optional `Ctrl+Space` hotkey integration |
+| **Git** | Recent | Recommended for update workflow and project-aware context |
+
+!!! info "Install scope"
+    Normal install (`pip install -e .`) only installs runtime dependencies.
+    It does not install test or docs tooling.
 
 ## Install Ollama
 
@@ -57,6 +63,9 @@ ollama pull qwen2.5-coder:1.5b
     cd drift-cli
     ./install.sh
     ```
+
+    The installer script is currently macOS-focused.
+    On Linux, use the source install flow.
 
 ## Verify Installation
 

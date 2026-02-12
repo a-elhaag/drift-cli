@@ -108,11 +108,19 @@ executor = get_executor("local", sandbox)
 executor.execute("touch test.txt")  # Only creates file inside sandbox
 ```
 
-## Requirements
+## System Requirements
 
-- macOS (Linux support planned)
-- Python 3.9+
-- [Ollama](https://ollama.com) (auto-installed by installer)
+| Requirement | Minimum | Required | Notes |
+| ----------- | ------- | -------- | ----- |
+| OS | macOS 12+ or modern Linux | Yes | Windows is not supported yet |
+| Python | 3.9+ | Yes | Check with `python3 --version` |
+| Ollama | Latest | Yes | Drift can auto-install/start/pull model |
+| Shell | Any shell for CLI | Yes | ZSH is only required for `Ctrl+Space` hotkey integration |
+| Git | Recent | Recommended | Needed for update workflow and project-aware context |
+
+Install behavior:
+- `pip install -e .` installs only normal runtime dependencies.
+- Dev/test/docs tooling is not installed unless you explicitly use extras (`.[dev,test]`) or install doc tooling manually.
 
 ## Development
 
