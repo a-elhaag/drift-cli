@@ -9,7 +9,7 @@ from rich.panel import Panel
 
 from drift_cli.commands.memory_cmd import memory_app
 from drift_cli.core.auto_setup import ensure_ollama_ready
-from drift_cli.core.config import ConfigManager
+from drift_cli.core.config import ConfigManager, DriftConfig
 from drift_cli.core.executor import Executor
 from drift_cli.core.first_run import is_first_run, run_setup_wizard
 from drift_cli.core.history import HistoryManager
@@ -32,16 +32,24 @@ app.add_typer(memory_app, name="memory")
 console = Console()
 
 
-@app.callback()
-def main(ctx: typer.Context):
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    query: str = typer.Argument(None, help="Natural language query (shortcut for 'drift suggest')"),
+):
     """Drift — terminal-native, safety-first AI assistant."""
     # First-run setup wizard
     if is_first_run():
         run_setup_wizard()
-        if ctx.invoked_subcommand is None:
+        if ctx.invoked_subcommand is None and not query:
             raise typer.Exit(0)
 
-    # If no subcommand given, show help
+    # If a query is given without a subcommand, treat it as 'suggest'
+    if ctx.invoked_subcommand is None and query:
+        suggest(query=query)
+        raise typer.Exit(0)
+
+    # No subcommand and no query → show help
     if ctx.invoked_subcommand is None:
         _show_help()
         raise typer.Exit(0)
@@ -377,6 +385,121 @@ def doctor():
 
 
 @app.command()
+def config():
+    """View and change Drift settings interactively."""
+    from rich.prompt import Prompt, Confirm
+
+    cm = get_config()
+    cfg = cm.load()
+
+    console.print("[bold cyan]Drift Settings[/bold cyan]\n")
+    console.print(f"  [cyan]model[/cyan]          = {cfg.model}")
+    console.print(f"  [cyan]ollama_url[/cyan]     = {cfg.ollama_url}")
+    console.print(f"  [cyan]temperature[/cyan]    = {cfg.temperature}")
+    console.print(f"  [cyan]max_history[/cyan]    = {cfg.max_history}")
+    console.print(f"  [cyan]auto_install[/cyan]   = {'ON' if cfg.auto_install_ollama else 'OFF'}")
+    console.print(f"  [cyan]auto_start[/cyan]     = {'ON' if cfg.auto_start_ollama else 'OFF'}")
+    console.print(f"  [cyan]auto_pull[/cyan]      = {'ON' if cfg.auto_pull_model else 'OFF'}")
+    console.print(f"  [cyan]auto_snapshot[/cyan]  = {'ON' if cfg.auto_snapshot else 'OFF'}")
+    console.print()
+
+    if not Confirm.ask("Edit settings?", default=False):
+        return
+
+    console.print("[dim]Press Enter to keep current value[/dim]\n")
+
+    new_model = Prompt.ask("Model", default=cfg.model)
+    new_url = Prompt.ask("Ollama URL", default=cfg.ollama_url)
+    new_temp = Prompt.ask("Temperature (0.0–1.0)", default=str(cfg.temperature))
+    new_hist = Prompt.ask("Max history entries", default=str(cfg.max_history))
+    new_auto_install = Confirm.ask("Auto-install Ollama?", default=cfg.auto_install_ollama)
+    new_auto_start = Confirm.ask("Auto-start Ollama?", default=cfg.auto_start_ollama)
+    new_auto_pull = Confirm.ask("Auto-pull model?", default=cfg.auto_pull_model)
+    new_snapshot = Confirm.ask("Auto-snapshot before execution?", default=cfg.auto_snapshot)
+
+    cm.save(DriftConfig(
+        model=new_model,
+        ollama_url=new_url,
+        temperature=float(new_temp),
+        top_p=cfg.top_p,
+        max_history=int(new_hist),
+        auto_snapshot=new_snapshot,
+        auto_install_ollama=new_auto_install,
+        auto_start_ollama=new_auto_start,
+        auto_pull_model=new_auto_pull,
+    ))
+    DriftUI.show_success("Settings saved to ~/.drift/config.json")
+
+
+@app.command()
+def uninstall():
+    """Uninstall Drift CLI and clean up all data."""
+    import shutil
+    import subprocess
+
+    console.print("[bold red]Drift Uninstaller[/bold red]\n")
+    console.print("This will remove:")
+    console.print("  1. drift-cli Python package")
+    console.print("  2. ~/.drift directory (config, history, snapshots)")
+    console.print()
+
+    if not typer.confirm("Proceed with uninstall?", default=False):
+        DriftUI.show_info("Cancelled")
+        return
+
+    # Remove ~/.drift
+    drift_dir = Path.home() / ".drift"
+    if drift_dir.exists():
+        shutil.rmtree(drift_dir)
+        DriftUI.show_success("Removed ~/.drift")
+    else:
+        console.print("[dim]  ~/.drift not found (skipped)[/dim]")
+
+    # Offer to uninstall Ollama
+    from drift_cli.core.auto_setup import is_ollama_installed
+
+    if is_ollama_installed():
+        console.print()
+        if typer.confirm("Also uninstall Ollama?", default=False):
+            import platform
+            system = platform.system().lower()
+
+            try:
+                if system == "darwin":
+                    # Stop Ollama
+                    subprocess.run(["pkill", "-f", "Ollama"], capture_output=True)
+                    # Remove app bundle
+                    app_path = Path("/Applications/Ollama.app")
+                    if app_path.exists():
+                        shutil.rmtree(app_path)
+                    # Remove binary (brew or manual)
+                    for p in ["/usr/local/bin/ollama", str(Path.home() / ".ollama")]:
+                        path = Path(p)
+                        if path.exists():
+                            if path.is_dir():
+                                shutil.rmtree(path)
+                            else:
+                                path.unlink()
+                    DriftUI.show_success("Ollama removed")
+                elif system == "linux":
+                    subprocess.run(["sudo", "rm", "-f", "/usr/local/bin/ollama"], capture_output=True)
+                    shutil.rmtree(Path.home() / ".ollama", ignore_errors=True)
+                    DriftUI.show_success("Ollama removed")
+                else:
+                    DriftUI.show_warning(f"Manual Ollama removal needed on {system}")
+            except Exception as e:
+                DriftUI.show_warning(f"Ollama removal incomplete: {e}")
+        else:
+            console.print("[dim]  Ollama kept[/dim]")
+
+    # Uninstall drift-cli package
+    console.print()
+    console.print("[yellow]To finish, run:[/yellow]")
+    console.print("  [cyan]pip uninstall drift-cli[/cyan]")
+    console.print()
+
+
+@app.command()
 def version():
     """Show Drift CLI version."""
     from drift_cli import __version__
@@ -398,19 +521,34 @@ def _show_help():
     console.print("[dim]Terminal-native, safety-first AI assistant[/dim]\n")
 
     console.print(Panel(
-        "[cyan]drift suggest[/cyan] [dim]<query>[/dim]    AI command suggestions\n"
-        "[cyan]drift explain[/cyan] [dim]<cmd>[/dim]      Explain a shell command\n"
-        "[cyan]drift find[/cyan] [dim]<query>[/dim]       Smart file search\n"
-        "[cyan]drift history[/cyan]             View past commands\n"
-        "[cyan]drift again[/cyan]               Re-run last command\n"
-        "[cyan]drift undo[/cyan]                Rollback last execution\n"
-        "[cyan]drift cleanup[/cyan]             Free snapshot storage\n"
-        "[cyan]drift doctor[/cyan]              System health check\n"
-        "[cyan]drift memory show[/cyan]         View learned preferences\n"
-        "[cyan]drift setup[/cyan]               Run setup wizard\n"
-        "[cyan]drift version[/cyan]             Show version",
+        "[cyan]drift[/cyan] [dim]\"list large files\"[/dim]     Quick shortcut (same as suggest)\n"
+        "[cyan]drift suggest[/cyan] [dim]<query>[/dim]       AI command suggestions\n"
+        "[cyan]drift explain[/cyan] [dim]<cmd>[/dim]         Explain a shell command\n"
+        "[cyan]drift find[/cyan] [dim]<query>[/dim]          Smart file search\n"
+        "[cyan]drift history[/cyan]                View past commands\n"
+        "[cyan]drift again[/cyan]                  Re-run last command\n"
+        "[cyan]drift undo[/cyan]                   Rollback last execution\n"
+        "[cyan]drift config[/cyan]                 View/edit settings\n"
+        "[cyan]drift doctor[/cyan]                 System health check\n"
+        "[cyan]drift cleanup[/cyan]                Free snapshot storage\n"
+        "[cyan]drift memory show[/cyan]            View learned preferences\n"
+        "[cyan]drift setup[/cyan]                  Run setup wizard\n"
+        "[cyan]drift uninstall[/cyan]              Remove Drift & data\n"
+        "[cyan]drift version[/cyan]                Show version",
         title="[bold]Commands[/bold]",
         border_style="cyan",
+    ))
+
+    console.print(Panel(
+        "[cyan]/git[/cyan]    Next git action     [cyan]/commit[/cyan]  Smart commit\n"
+        "[cyan]/find[/cyan]   Search files        [cyan]/fix[/cyan]     Fix recent errors\n"
+        "[cyan]/test[/cyan]   Run project tests   [cyan]/build[/cyan]   Build project\n"
+        "[cyan]/dev[/cyan]    Start dev server    [cyan]/clean[/cyan]   Clean artifacts\n"
+        "[cyan]/deps[/cyan]   Check dependencies  [cyan]/lint[/cyan]    Run linter\n"
+        "[cyan]/tree[/cyan]   Directory tree      [cyan]/tips[/cyan]    Workflow tips\n"
+        "\n[dim]Usage: drift \"/git\" or drift suggest \"/commit\"[/dim]",
+        title="[bold]Slash Commands[/bold]",
+        border_style="yellow",
     ))
 
     console.print(Panel(
@@ -418,7 +556,7 @@ def _show_help():
         "[dim]-d, --dry-run[/dim]    Preview only, don't execute\n"
         "[dim]-v, --verbose[/dim]    Show detailed explanation\n"
         "[dim]--no-memory[/dim]      Disable personalization",
-        title="[bold]Suggest Flags[/bold]",
+        title="[bold]Flags (for suggest)[/bold]",
         border_style="dim",
     ))
     console.print()
