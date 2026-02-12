@@ -30,20 +30,20 @@ drift doctor
 
 ## Commands
 
-| Command                     | Description                           |
-| --------------------------- | ------------------------------------- |
-| `drift suggest <query>`      | Get AI-powered command suggestions    |
-| `drift find <query>`         | Smart file and content search         |
-| `drift explain <command>`    | Understand what a command does        |
-| `drift history`             | View your Drift command history       |
-| `drift again`               | Re-run the last Drift command         |
-| `drift undo`                | Restore files from the last operation |
-| `drift cleanup`             | Remove old snapshots to free space    |
-| `drift doctor`              | Diagnose common terminal issues       |
-| `drift memory show`         | See what Drift has learned about you  |
-| `drift memory stats`        | Usage statistics                      |
-| `drift memory reset`        | Reset learned preferences             |
-| `drift version`             | Show version                          |
+| Command                   | Description                           |
+| ------------------------- | ------------------------------------- |
+| `drift suggest <query>`   | Get AI-powered command suggestions    |
+| `drift find <query>`      | Smart file and content search         |
+| `drift explain <command>` | Understand what a command does        |
+| `drift history`           | View your Drift command history       |
+| `drift again`             | Re-run the last Drift command         |
+| `drift undo`              | Restore files from the last operation |
+| `drift cleanup`           | Remove old snapshots to free space    |
+| `drift doctor`            | Diagnose common terminal issues       |
+| `drift memory show`       | See what Drift has learned about you  |
+| `drift memory stats`      | Usage statistics                      |
+| `drift memory reset`      | Reset learned preferences             |
+| `drift version`           | Show version                          |
 
 ## Slash Commands
 

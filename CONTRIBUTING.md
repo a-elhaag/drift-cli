@@ -92,6 +92,7 @@ make format
 4. Update help text and README
 
 Example:
+
 ```python
 @app.command()
 def mycommand(
@@ -119,6 +120,7 @@ def mycommand(
 ## Documentation
 
 Update relevant docs:
+
 - **README.md** - Main documentation
 - **QUICKSTART.md** - User guide
 - **DEVELOPMENT.md** - Developer guide
@@ -140,18 +142,21 @@ refactor: simplify safety checker logic
 ## Areas for Contribution
 
 ### High Priority
+
 - 🔴 Linux support (installer and compatibility)
 - 🔴 Bash integration (in addition to ZSH)
 - 🔴 Improved error messages
 - 🔴 More comprehensive tests
 
 ### Medium Priority
+
 - 🟡 Additional models support
 - 🟡 Command aliasing
 - 🟡 Workspace-specific configurations
 - 🟡 Better dry-run previews
 
 ### Nice to Have
+
 - 🟢 Fish shell support
 - 🟢 Syntax highlighting for previews
 - 🟢 Interactive selection mode
@@ -166,6 +171,7 @@ refactor: simplify safety checker logic
 ## Recognition
 
 Contributors will be:
+
 - Listed in CONTRIBUTORS.md
 - Mentioned in release notes
 - Credited in the README
