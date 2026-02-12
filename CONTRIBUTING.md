@@ -4,6 +4,7 @@ Thank you for your interest in contributing! 🎉
 
 ## Code of Conduct
 
+This project follows `CODE_OF_CONDUCT.md`.
 Be respectful, inclusive, and constructive. We're all here to make the terminal smarter and safer.
 
 ## How to Contribute
@@ -36,8 +37,9 @@ Be respectful, inclusive, and constructive. We're all here to make the terminal 
 4. **Update documentation** if needed
 5. **Format code**: `make format`
 6. **Lint**: `make lint`
-7. **Commit** with clear messages
-8. **Push** and create a PR
+7. **Test**: `make test`
+8. **Commit** with clear messages
+9. **Push** and create a PR
 
 ## Development Setup
 
@@ -47,13 +49,16 @@ git clone https://github.com/YOUR_USERNAME/drift-cli.git
 cd drift-cli
 
 # Install in development mode
-make dev
+make dev  # installs dev + test extras
 
 # Check linting
 make lint
 
 # Format code
 make format
+
+# Run tests
+make test
 ```
 
 ## Code Style
@@ -66,20 +71,17 @@ make format
 
 ## Testing
 
-Tests are planned for future development. When contributing:
-
-- Manually verify new features work as expected
-- Test both success and failure cases
-- Use `--dry-run` mode during development
+All contributions should include automated test coverage when practical.
+Test both success and failure cases.
 
 ### Running Tests
 
 ```bash
-# Lint check
-make lint
+# Run tests
+make test
 
-# Format code
-make format
+# Lint + tests
+make check
 ```
 
 ## Architecture Guidelines

@@ -118,13 +118,19 @@ executor.execute("touch test.txt")  # Only creates file inside sandbox
 
 ```bash
 # Install in development mode
-pip install -e ".[dev]"
+pip install -e ".[dev,test]"
+
+# Format code
+make format
 
 # Lint
 make lint
 
-# Format code
-make format
+# Run tests
+make test
+
+# Run full verification
+make check
 ```
 
 ## Configuration
@@ -138,7 +144,9 @@ Copy `config.example.json` to `~/.drift/config.json` and customize:
   "temperature": 0.1,
   "top_p": 0.9,
   "max_history": 100,
-  "auto_snapshot": true
+  "auto_snapshot": true,
+  "auto_stop_ollama_when_idle": false,
+  "ollama_idle_minutes": 30
 }
 ```
 

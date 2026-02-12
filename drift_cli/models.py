@@ -36,9 +36,7 @@ class Plan(BaseModel):
     risk: RiskLevel = Field(..., description="Risk level of the operation")
     commands: List[Command] = Field(..., description="Commands to execute")
     explanation: str = Field(..., description="Detailed explanation of the approach")
-    affected_files: Optional[List[str]] = Field(
-        None, description="Files that may be affected"
-    )
+    affected_files: Optional[List[str]] = Field(None, description="Files that may be affected")
     clarification_needed: Optional[List[ClarificationQuestion]] = Field(
         None, description="Questions to ask before proceeding"
     )

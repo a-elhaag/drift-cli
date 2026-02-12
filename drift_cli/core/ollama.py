@@ -6,18 +6,18 @@ from typing import Optional
 import httpx
 from pydantic import ValidationError
 
-from drift_cli.models import Plan
 from drift_cli.core.memory import MemoryManager, enhance_prompt_with_memory
+from drift_cli.models import Plan
 
 
 class OllamaClient:
     """Client for interacting with local Ollama API."""
 
     def __init__(
-        self, 
-        base_url: str = "http://localhost:11434", 
+        self,
+        base_url: str = "http://localhost:11434",
         model: str = "qwen2.5-coder:1.5b",
-        memory: Optional[MemoryManager] = None
+        memory: Optional[MemoryManager] = None,
     ):
         self.base_url = base_url
         self.model = model
@@ -49,14 +49,14 @@ class OllamaClient:
         """
         # Sanitize input to prevent prompt injection
         sanitized_query = self._sanitize_input(query)
-        
+
         # Update memory context
         if use_memory and self.memory:
             self.memory.update_context(query=sanitized_query)
-        
+
         system_prompt = self._build_system_prompt()
         user_prompt = self._build_user_prompt(sanitized_query, context)
-        
+
         # Enhance with memory if enabled
         if use_memory and self.memory:
             user_prompt = enhance_prompt_with_memory(user_prompt, self.memory)
@@ -92,7 +92,8 @@ class OllamaClient:
                     if attempt < max_retries - 1:
                         continue
                     raise ValueError(
-                        f"Invalid JSON from Ollama (attempt {attempt + 1}/{max_retries}): {str(e)[:100]}"
+                        "Invalid JSON from Ollama "
+                        f"(attempt {attempt + 1}/{max_retries}): {str(e)[:100]}"
                     )
                 except ValidationError as e:
                     error_details = str(e)[:200]
@@ -149,7 +150,8 @@ Be concise but thorough."""
 
     def _build_system_prompt(self) -> str:
         """Build the system prompt for the LLM."""
-        return """You are Drift, a terminal assistant. Convert natural language queries into safe, executable shell commands.
+        return """You are Drift, a terminal assistant.
+Convert natural language queries into safe, executable shell commands.
 
 CRITICAL: You MUST respond with ONLY valid JSON matching this exact schema:
 {
@@ -194,24 +196,24 @@ Respond with ONLY the JSON object, no other text."""
     def _sanitize_input(self, text: str) -> str:
         """
         Sanitize user input to prevent prompt injection attacks.
-        
+
         Args:
             text: User input to sanitize
-            
+
         Returns:
             Sanitized text
         """
         # Remove potentially dangerous characters
-        dangerous_chars = ['\x00', '\r', '\n\n\n']  # null bytes, multiple newlines
+        dangerous_chars = ["\x00", "\r", "\n\n\n"]  # null bytes, multiple newlines
         for char in dangerous_chars:
             if char in text:
-                text = text.replace(char, ' ')
-        
+                text = text.replace(char, " ")
+
         # Limit length to prevent DoS
         max_length = 1000
         if len(text) > max_length:
             text = text[:max_length]
-        
+
         return text.strip()
 
     def close(self):

@@ -1,15 +1,108 @@
 """Auto-setup utilities for Ollama installation, model pulling, and server management."""
 
+import os
 import platform
 import shutil
 import subprocess
+import sys
 import time
-from typing import Optional
+from pathlib import Path
 
 import httpx
 from rich.console import Console
 
 console = Console()
+
+
+def _drift_dir() -> Path:
+    return Path.home() / ".drift"
+
+
+def _activity_file() -> Path:
+    return _drift_dir() / "ollama.last_used"
+
+
+def _started_marker_file() -> Path:
+    return _drift_dir() / "ollama.started_by_drift"
+
+
+def _mark_started_by_drift() -> None:
+    marker = _started_marker_file()
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("1")
+
+
+def _clear_started_by_drift_marker() -> None:
+    marker = _started_marker_file()
+    if marker.exists():
+        marker.unlink()
+
+
+def mark_ollama_activity() -> None:
+    """Record latest Drift activity that used Ollama."""
+    activity = _activity_file()
+    activity.parent.mkdir(parents=True, exist_ok=True)
+    activity.touch()
+
+
+def schedule_idle_shutdown_if_needed(
+    enabled: bool,
+    idle_minutes: int,
+) -> None:
+    """Schedule an Ollama shutdown after inactivity.
+
+    Drift only auto-stops Ollama if the server was started by Drift.
+    """
+    if not enabled or idle_minutes <= 0:
+        return
+
+    mark_ollama_activity()
+    marker = _started_marker_file()
+    if not marker.exists():
+        return
+
+    activity = _activity_file()
+    idle_seconds = int(idle_minutes * 60)
+    script = (
+        "import os, subprocess, sys, time\n"
+        "idle = int(sys.argv[1])\n"
+        "activity = sys.argv[2]\n"
+        "marker = sys.argv[3]\n"
+        "time.sleep(idle)\n"
+        "if not os.path.exists(marker):\n"
+        "    raise SystemExit(0)\n"
+        "last_used = os.path.getmtime(activity) if os.path.exists(activity) else 0\n"
+        "if time.time() - last_used < idle:\n"
+        "    raise SystemExit(0)\n"
+        "subprocess.run(\n"
+        "    ['ollama', 'stop', '--all'],\n"
+        "    stdout=subprocess.DEVNULL,\n"
+        "    stderr=subprocess.DEVNULL,\n"
+        ")\n"
+        "subprocess.run(\n"
+        "    ['pkill', '-f', 'ollama serve'],\n"
+        "    stdout=subprocess.DEVNULL,\n"
+        "    stderr=subprocess.DEVNULL,\n"
+        ")\n"
+        "try:\n"
+        "    os.remove(marker)\n"
+        "except OSError:\n"
+        "    pass\n"
+    )
+
+    subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            script,
+            str(idle_seconds),
+            str(activity),
+            str(marker),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        env=os.environ.copy(),
+    )
 
 
 def is_ollama_installed() -> bool:
@@ -82,12 +175,13 @@ def install_ollama() -> bool:
 
             # Fallback: download the macOS app
             console.print("[dim]  Downloading from ollama.com...[/dim]")
+            archive_path = "/tmp/Ollama-darwin.zip"
             result = subprocess.run(
                 [
                     "curl",
                     "-fsSL",
                     "-o",
-                    "/tmp/Ollama.dmg",
+                    archive_path,
                     "https://ollama.com/download/Ollama-darwin.zip",
                 ],
                 capture_output=True,
@@ -97,7 +191,7 @@ def install_ollama() -> bool:
             if result.returncode == 0:
                 # Try to unzip and install
                 subprocess.run(
-                    ["unzip", "-o", "/tmp/Ollama-darwin.zip", "-d", "/Applications/"],
+                    ["unzip", "-o", archive_path, "-d", "/Applications/"],
                     capture_output=True,
                     text=True,
                     timeout=60,
@@ -201,6 +295,7 @@ def start_ollama(base_url: str = "http://localhost:11434", timeout: int = 15) ->
         for i in range(timeout):
             time.sleep(1)
             if is_ollama_running(base_url):
+                _mark_started_by_drift()
                 console.print("[green]  ✓ Ollama is running[/green]")
                 return True
 
@@ -295,6 +390,7 @@ def ensure_ollama_ready(
 
     # Step 2: Is Ollama running?
     if not is_ollama_running(base_url):
+        _clear_started_by_drift_marker()
         if auto_start:
             if not start_ollama(base_url):
                 return False
@@ -311,9 +407,7 @@ def ensure_ollama_ready(
                 return False
             # Verify after pull
             if not is_model_available(model, base_url):
-                console.print(
-                    f"[red]✗ Model {model} still not available after pull[/red]"
-                )
+                console.print(f"[red]✗ Model {model} still not available after pull[/red]")
                 return False
         else:
             console.print(f"[red]✗ Model {model} is not available[/red]")

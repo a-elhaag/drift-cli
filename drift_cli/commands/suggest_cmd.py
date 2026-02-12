@@ -5,7 +5,10 @@ import os
 import typer
 from rich.console import Console
 
-from drift_cli.core.auto_setup import ensure_ollama_ready
+from drift_cli.core.auto_setup import (
+    ensure_ollama_ready,
+    schedule_idle_shutdown_if_needed,
+)
 from drift_cli.core.config import ConfigManager
 from drift_cli.core.executor import Executor
 from drift_cli.core.history import HistoryManager
@@ -28,6 +31,14 @@ def _get_ollama_client() -> OllamaClient:
     config = _get_config().load()
     model = os.getenv("DRIFT_MODEL", config.model)
     return OllamaClient(base_url=config.ollama_url, model=model)
+
+
+def _schedule_ollama_idle_shutdown() -> None:
+    config = _get_config().load()
+    schedule_idle_shutdown_if_needed(
+        enabled=config.auto_stop_ollama_when_idle,
+        idle_minutes=config.ollama_idle_minutes,
+    )
 
 
 def _check_ollama():
@@ -58,12 +69,8 @@ def suggest(
     execute: bool = typer.Option(
         False, "--execute", "-e", help="Execute immediately without confirmation"
     ),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", "-d", help="Show dry-run only, don't execute"
-    ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Show detailed explanation"
-    ),
+    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Show dry-run only, don't execute"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed explanation"),
     no_memory: bool = typer.Option(
         False, "--no-memory", help="Disable memory/personalization for this query"
     ),
@@ -159,13 +166,9 @@ def suggest(
                 query, plan, executed=True, exit_code=exit_code, snapshot_id=snapshot_id
             )
             if memory:
-                memory.learn_from_execution(
-                    plan, executed=True, success=(exit_code == 0)
-                )
+                memory.learn_from_execution(plan, executed=True, success=(exit_code == 0))
             if snapshot_id and exit_code == 0:
-                console.print(
-                    f"[dim]Snapshot: {snapshot_id[:8]}… (drift undo to rollback)[/dim]"
-                )
+                console.print(f"[dim]Snapshot: {snapshot_id[:8]}… (drift undo to rollback)[/dim]")
         else:
             DriftUI.show_info("Cancelled")
             history.add_entry(query, plan, executed=False)
@@ -176,13 +179,17 @@ def suggest(
         DriftUI.show_error(str(e))
         raise typer.Exit(1)
     finally:
+        _schedule_ollama_idle_shutdown()
         client.close()
 
 
 @suggest_app.command("find")
 def find(query: str = typer.Argument(..., help="What to find")):
     """Smart file and content search."""
-    find_query = f"Find: {query}. Use safe read-only commands like 'find', 'rg', 'grep', 'fd', or 'ls'. Do not modify any files."
+    find_query = (
+        f"Find: {query}. Use safe read-only commands like 'find', 'rg', 'grep', "
+        "'fd', or 'ls'. Do not modify any files."
+    )
     suggest(query=find_query, execute=False, dry_run=False, verbose=False)
 
 
@@ -199,4 +206,5 @@ def explain(command: str = typer.Argument(..., help="Command to explain")):
         DriftUI.show_error(str(e))
         raise typer.Exit(1)
     finally:
+        _schedule_ollama_idle_shutdown()
         client.close()

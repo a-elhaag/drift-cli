@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a reproducible problem in Drift CLI
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please include enough detail for us to reproduce the issue.
+
+  - type: input
+    id: drift_version
+    attributes:
+      label: Drift version
+      description: Output of `drift version`
+      placeholder: "v0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: OS and shell
+      description: Example: macOS 14.6 + zsh 5.9
+      placeholder: "macOS + zsh"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide exact commands and sequence.
+      placeholder: |
+        1. Run ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor_output
+    attributes:
+      label: `drift doctor` output (optional)
+      render: shell

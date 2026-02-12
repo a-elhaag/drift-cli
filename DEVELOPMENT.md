@@ -12,7 +12,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install in development mode
-pip install -e ".[dev]"
+pip install -e ".[dev,test]"
 
 # Install Ollama (if not already installed)
 curl -fsSL https://ollama.com/install.sh | sh
@@ -36,7 +36,7 @@ drift-cli/
 │   │   └── display.py  # Rich-based UI
 │   ├── cli.py          # Main CLI application
 │   └── models.py       # Pydantic models
-├── tests/              # Test suite (coming soon)
+├── tests/              # Pytest suite
 ├── drift.zsh           # ZSH integration
 ├── install.sh          # Installer script
 └── pyproject.toml      # Project metadata
@@ -48,10 +48,20 @@ We use `ruff` for linting and formatting:
 
 ```bash
 # Check code
-ruff check drift_cli/
+ruff check drift_cli tests
 
 # Format code
-ruff format drift_cli/
+ruff format drift_cli tests
+```
+
+## Testing
+
+```bash
+# Run all tests
+pytest -q
+
+# Equivalent make target
+make test
 ```
 
 ## Adding New Commands
@@ -109,7 +119,7 @@ if client.is_available():
 
 1. Update version in `drift_cli/__init__.py`
 2. Update CHANGELOG.md
-3. Lint: `ruff check drift_cli/`
+3. Verify: `make check`
 4. Build: `python -m build`
 5. Tag release: `git tag v0.1.0`
 6. Push: `git push --tags`

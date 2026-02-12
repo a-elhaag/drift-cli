@@ -5,11 +5,12 @@ import shlex
 import subprocess
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
+from drift_cli.core.config import ConfigManager
 from drift_cli.core.history import HistoryManager
 from drift_cli.core.safety import SafetyChecker
-from drift_cli.models import Command, Plan
+from drift_cli.models import Plan
 
 
 class Executor:
@@ -22,9 +23,7 @@ class Executor:
         self._context_cache = None
         self._context_cache_time = 0
 
-    def execute_plan(
-        self, plan: Plan, dry_run: bool = False
-    ) -> Tuple[int, str, Optional[str]]:
+    def execute_plan(self, plan: Plan, dry_run: bool = False) -> Tuple[int, str, Optional[str]]:
         """
         Execute a plan's commands.
 
@@ -38,14 +37,14 @@ class Executor:
         # Check for forced dry-run from environment
         if os.getenv("DRIFT_DRY_RUN", "").lower() in ("1", "true", "yes"):
             dry_run = True
-        
+
         # Validate safety
         commands_list = [cmd.command for cmd in plan.commands]
         all_safe, warnings = SafetyChecker.validate_commands(commands_list)
 
         if not all_safe:
             return 1, "\n".join(warnings), None
-        
+
         # Validate sandbox if enabled
         if self.sandbox_root:
             violation = self._check_sandbox_violation()
@@ -54,7 +53,7 @@ class Executor:
 
         # Create snapshot if files will be affected
         snapshot_id = None
-        if plan.affected_files and not dry_run:
+        if plan.affected_files and not dry_run and self._auto_snapshot_enabled():
             snapshot_id = self.history.create_snapshot(plan.affected_files)
 
         # Execute commands
@@ -82,16 +81,24 @@ class Executor:
                         break
 
         return exit_code, "\n".join(output_lines), snapshot_id
-    
+
+    @staticmethod
+    def _auto_snapshot_enabled() -> bool:
+        """Read auto-snapshot preference from config, defaulting to enabled."""
+        try:
+            return ConfigManager().load().auto_snapshot
+        except Exception:
+            return True
+
     def _check_sandbox_violation(self) -> Optional[str]:
         """Check if current directory violates sandbox constraints."""
         if not self.sandbox_root:
             return None
-        
+
         cwd = os.getcwd()
         sandbox_path = Path(self.sandbox_root).resolve()
         current_path = Path(cwd).resolve()
-        
+
         try:
             current_path.relative_to(sandbox_path)
             return None
@@ -105,7 +112,7 @@ class Executor:
     def _run_command(self, command: str) -> Tuple[int, str]:
         """
         Run a single shell command with improved safety.
-        
+
         Uses shell=False when possible to prevent injection.
 
         Returns:
@@ -114,8 +121,8 @@ class Executor:
         try:
             # For complex commands with pipes, redirects, etc., we still need shell=True
             # but we've already validated the command through SafetyChecker
-            needs_shell = any(char in command for char in ['|', '>', '<', '&&', '||', ';'])
-            
+            needs_shell = any(char in command for char in ["|", ">", "<", "&&", "||", ";"])
+
             if needs_shell:
                 # Use shell=True for complex commands (already safety-checked)
                 result = subprocess.run(
@@ -125,7 +132,7 @@ class Executor:
                     text=True,
                     timeout=300,  # 5 minute timeout
                     cwd=os.getcwd(),
-                    executable='/bin/bash',  # Explicit shell for consistency
+                    executable="/bin/bash",  # Explicit shell for consistency
                 )
             else:
                 # Use shell=False for simple commands (safer)
@@ -148,9 +155,9 @@ class Executor:
                         text=True,
                         timeout=300,
                         cwd=os.getcwd(),
-                        executable='/bin/bash',
+                        executable="/bin/bash",
                     )
-            
+
             output = result.stdout + result.stderr
             return result.returncode, output.strip()
         except subprocess.TimeoutExpired:
@@ -166,12 +173,12 @@ class Executor:
             Context string with cwd, user, etc.
         """
         import time
-        
+
         # Cache context for 5 seconds to avoid repeated git calls
         current_time = time.time()
         if self._context_cache and (current_time - self._context_cache_time) < 5:
             return self._context_cache
-        
+
         context_parts = [
             f"Current directory: {os.getcwd()}",
             f"User: {os.getenv('USER', 'unknown')}",
@@ -182,12 +189,12 @@ class Executor:
         git_root = self._get_git_root()
         if git_root:
             context_parts.append(f"Git repository: {git_root}")
-        
+
         self._context_cache = "\n".join(context_parts)
         self._context_cache_time = current_time
-        
+
         return self._context_cache
-    
+
     @lru_cache(maxsize=1)
     def _get_git_root(self) -> Optional[str]:
         """Get git root with caching (cached until process restart)."""

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DriftConfig(BaseModel):
@@ -19,6 +19,8 @@ class DriftConfig(BaseModel):
     auto_install_ollama: bool = True
     auto_start_ollama: bool = True
     auto_pull_model: bool = True
+    auto_stop_ollama_when_idle: bool = False
+    ollama_idle_minutes: int = Field(30, ge=1, le=1440)
 
 
 class ConfigManager:

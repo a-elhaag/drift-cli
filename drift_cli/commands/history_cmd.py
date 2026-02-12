@@ -96,9 +96,7 @@ def cleanup(
     deleted = hist.cleanup_old_snapshots(keep=keep, max_age_days=days)
 
     if deleted > 0:
-        new_size = sum(
-            f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file()
-        )
+        new_size = sum(f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file())
         freed = total_mb - new_size / (1024 * 1024)
         DriftUI.show_success(f"Deleted {deleted} snapshots, freed {freed:.1f} MB")
     else:

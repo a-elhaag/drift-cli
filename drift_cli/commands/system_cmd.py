@@ -7,7 +7,6 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from drift_cli.core.auto_setup import ensure_ollama_ready
 from drift_cli.core.config import ConfigManager, DriftConfig
 from drift_cli.core.first_run import run_setup_wizard
 from drift_cli.ui.display import DriftUI
@@ -97,18 +96,15 @@ def config():
     console.print(f"  [cyan]ollama_url[/cyan]     = {cfg.ollama_url}")
     console.print(f"  [cyan]temperature[/cyan]    = {cfg.temperature}")
     console.print(f"  [cyan]max_history[/cyan]    = {cfg.max_history}")
+    console.print(f"  [cyan]auto_install[/cyan]   = {'ON' if cfg.auto_install_ollama else 'OFF'}")
+    console.print(f"  [cyan]auto_start[/cyan]     = {'ON' if cfg.auto_start_ollama else 'OFF'}")
+    console.print(f"  [cyan]auto_pull[/cyan]      = {'ON' if cfg.auto_pull_model else 'OFF'}")
+    console.print(f"  [cyan]auto_snapshot[/cyan]  = {'ON' if cfg.auto_snapshot else 'OFF'}")
     console.print(
-        f"  [cyan]auto_install[/cyan]   = {'ON' if cfg.auto_install_ollama else 'OFF'}"
+        "  [cyan]auto_stop_idle[/cyan] = "
+        f"{'ON' if cfg.auto_stop_ollama_when_idle else 'OFF'}"
     )
-    console.print(
-        f"  [cyan]auto_start[/cyan]     = {'ON' if cfg.auto_start_ollama else 'OFF'}"
-    )
-    console.print(
-        f"  [cyan]auto_pull[/cyan]      = {'ON' if cfg.auto_pull_model else 'OFF'}"
-    )
-    console.print(
-        f"  [cyan]auto_snapshot[/cyan]  = {'ON' if cfg.auto_snapshot else 'OFF'}"
-    )
+    console.print(f"  [cyan]idle_minutes[/cyan]   = {cfg.ollama_idle_minutes}")
     console.print()
 
     if not Confirm.ask("Edit settings?", default=False):
@@ -120,14 +116,18 @@ def config():
     new_url = Prompt.ask("Ollama URL", default=cfg.ollama_url)
     new_temp = Prompt.ask("Temperature (0.0–1.0)", default=str(cfg.temperature))
     new_hist = Prompt.ask("Max history entries", default=str(cfg.max_history))
-    new_auto_install = Confirm.ask(
-        "Auto-install Ollama?", default=cfg.auto_install_ollama
-    )
+    new_auto_install = Confirm.ask("Auto-install Ollama?", default=cfg.auto_install_ollama)
     new_auto_start = Confirm.ask("Auto-start Ollama?", default=cfg.auto_start_ollama)
     new_auto_pull = Confirm.ask("Auto-pull model?", default=cfg.auto_pull_model)
-    new_snapshot = Confirm.ask(
-        "Auto-snapshot before execution?", default=cfg.auto_snapshot
+    new_auto_stop_idle = Confirm.ask(
+        "Auto-stop Ollama when idle?",
+        default=cfg.auto_stop_ollama_when_idle,
     )
+    new_idle_minutes = Prompt.ask(
+        "Idle minutes before auto-stop",
+        default=str(cfg.ollama_idle_minutes),
+    )
+    new_snapshot = Confirm.ask("Auto-snapshot before execution?", default=cfg.auto_snapshot)
 
     cm.save(
         DriftConfig(
@@ -140,6 +140,8 @@ def config():
             auto_install_ollama=new_auto_install,
             auto_start_ollama=new_auto_start,
             auto_pull_model=new_auto_pull,
+            auto_stop_ollama_when_idle=new_auto_stop_idle,
+            ollama_idle_minutes=int(new_idle_minutes),
         )
     )
     DriftUI.show_success("Settings saved to ~/.drift/config.json")
@@ -160,24 +162,29 @@ def update():
 
     git_dir = repo_dir / ".git"
     if not git_dir.exists():
+        console.print("[red]✗ Cannot auto-update: Drift was not installed from a git clone.[/red]")
         console.print(
-            "[red]✗ Cannot auto-update: Drift was not installed from a git clone.[/red]"
-        )
-        console.print(
-            "  [dim]Reinstall with:[/dim]  git clone https://github.com/a-elhaag/drift-cli.git && cd drift-cli && pip install -e ."
+            "  [dim]Reinstall with:[/dim]  git clone "
+            "https://github.com/a-elhaag/drift-cli.git && cd drift-cli && pip install -e ."
         )
         raise typer.Exit(1)
 
     console.print("[cyan]🔄 Checking for updates...[/cyan]")
 
     try:
-        subprocess.run(
+        fetch_result = subprocess.run(
             ["git", "fetch", "--quiet"],
             cwd=repo_dir,
             capture_output=True,
             text=True,
             timeout=30,
         )
+        if fetch_result.returncode != 0:
+            console.print("[red]✗ Failed to fetch latest updates from remote.[/red]")
+            details = fetch_result.stderr.strip() or fetch_result.stdout.strip()
+            if details:
+                console.print(f"  [dim]{details}[/dim]")
+            raise typer.Exit(1)
 
         behind = subprocess.run(
             ["git", "rev-list", "--count", "HEAD..@{u}"],
@@ -187,14 +194,32 @@ def update():
             timeout=10,
         )
 
-        commits_behind = int(behind.stdout.strip() or "0")
+        if behind.returncode != 0:
+            console.print("[red]✗ Cannot determine upstream status for this branch.[/red]")
+            details = behind.stderr.strip() or behind.stdout.strip()
+            if details:
+                console.print(f"  [dim]{details}[/dim]")
+            console.print(
+                "[dim]Set upstream, then retry: git branch --set-upstream-to origin/main[/dim]"
+            )
+            raise typer.Exit(1)
+
+        try:
+            commits_behind = int(behind.stdout.strip() or "0")
+        except ValueError:
+            console.print("[red]✗ Unexpected git output while checking updates.[/red]")
+            details = behind.stdout.strip() or behind.stderr.strip()
+            if details:
+                console.print(f"  [dim]{details}[/dim]")
+            raise typer.Exit(1)
 
         if commits_behind == 0:
             console.print("[green]✓ Drift CLI is already up to date.[/green]")
             return
 
         console.print(
-            f"[yellow]  {commits_behind} new commit{'s' if commits_behind != 1 else ''} available[/yellow]"
+            f"[yellow]  {commits_behind} new commit"
+            f"{'s' if commits_behind != 1 else ''} available[/yellow]"
         )
 
         result = subprocess.run(
@@ -206,9 +231,7 @@ def update():
         )
 
         if result.returncode != 0:
-            console.print(
-                "[red]✗ Update failed (merge conflict or diverged branch).[/red]"
-            )
+            console.print("[red]✗ Update failed (merge conflict or diverged branch).[/red]")
             console.print(f"  [dim]{result.stderr.strip()}[/dim]")
             raise typer.Exit(1)
 

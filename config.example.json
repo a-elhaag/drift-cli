@@ -7,5 +7,7 @@
   "auto_snapshot": true,
   "auto_install_ollama": true,
   "auto_start_ollama": true,
-  "auto_pull_model": true
+  "auto_pull_model": true,
+  "auto_stop_ollama_when_idle": false,
+  "ollama_idle_minutes": 30
 }

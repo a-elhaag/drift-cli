@@ -1,20 +1,17 @@
 """Executor interface with multiple implementations (mock, local, docker)."""
 
-import os
-import shlex
-import shutil
 import subprocess
-import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 
 @dataclass
 class ExecutionResult:
     """Result of command execution."""
+
     exit_code: int
     stdout: str
     stderr: str
@@ -54,7 +51,7 @@ class ExecutorBase(ABC):
 class MockExecutor(ExecutorBase):
     """
     Mock executor - doesn't actually run commands.
-    
+
     Perfect for testing:
     - JSON parsing
     - Safety checks
@@ -70,21 +67,23 @@ class MockExecutor(ExecutorBase):
     def execute(self, command: str) -> ExecutionResult:
         """
         Mock execution - just log and pretend success.
-        
+
         Args:
             command: Command to (pretend to) execute
-            
+
         Returns:
             ExecutionResult with fake but realistic data
         """
         start = datetime.now()
 
         # Log the execution
-        self.execution_log.append({
-            "command": command,
-            "timestamp": start.isoformat(),
-            "mode": "mock",
-        })
+        self.execution_log.append(
+            {
+                "command": command,
+                "timestamp": start.isoformat(),
+                "mode": "mock",
+            }
+        )
 
         # Return fake success
         result = ExecutionResult(
@@ -105,7 +104,7 @@ class MockExecutor(ExecutorBase):
 class LocalExecutor(ExecutorBase):
     """
     Local executor - runs commands in sandbox directory.
-    
+
     Safety:
     - Enforces sandbox_root (e.g., /tmp/drift-sandbox)
     - Blocks commands that escape the sandbox
@@ -115,10 +114,10 @@ class LocalExecutor(ExecutorBase):
     def execute(self, command: str) -> ExecutionResult:
         """
         Execute command locally in sandbox.
-        
+
         Args:
             command: Command to execute
-            
+
         Returns:
             ExecutionResult with actual output
         """
@@ -178,7 +177,7 @@ class LocalExecutor(ExecutorBase):
 class DockerExecutor(ExecutorBase):
     """
     Docker executor - runs commands in isolated container.
-    
+
     Maximum safety:
     - Commands run inside container
     - Mounted sandbox directory only
@@ -198,10 +197,10 @@ class DockerExecutor(ExecutorBase):
     def execute(self, command: str) -> ExecutionResult:
         """
         Execute command inside Docker container.
-        
+
         Args:
             command: Command to execute
-            
+
         Returns:
             ExecutionResult from container
         """
@@ -219,11 +218,17 @@ class DockerExecutor(ExecutorBase):
         try:
             # Mount sandbox as /work, run command there
             docker_cmd = [
-                "docker", "run", "--rm",
-                "-v", f"{self.sandbox_root}:/work",
-                "-w", "/work",
+                "docker",
+                "run",
+                "--rm",
+                "-v",
+                f"{self.sandbox_root}:/work",
+                "-w",
+                "/work",
                 self.image,
-                "bash", "-lc", command,
+                "bash",
+                "-lc",
+                command,
             ]
 
             result = subprocess.run(
@@ -266,11 +271,11 @@ class DockerExecutor(ExecutorBase):
 def get_executor(mode: str = "mock", sandbox_root: Optional[Path] = None) -> ExecutorBase:
     """
     Factory function to get the right executor.
-    
+
     Args:
         mode: "mock" (safest), "local" (sandbox), or "docker" (most isolated)
         sandbox_root: Path to sandbox directory
-        
+
     Returns:
         Appropriate executor instance
     """

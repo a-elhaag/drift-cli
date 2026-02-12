@@ -77,9 +77,7 @@ class DriftUI:
     def confirm_execution(cls, risk: RiskLevel) -> bool:
         """Ask user to confirm execution."""
         if risk == RiskLevel.HIGH:
-            console.print(
-                "[bold red]⚠️  HIGH RISK — review commands carefully[/bold red]"
-            )
+            console.print("[bold red]⚠️  HIGH RISK — review commands carefully[/bold red]")
             response = Prompt.ask(
                 "[red]Type 'YES' to proceed[/red]",
                 default="N",
@@ -98,9 +96,7 @@ class DriftUI:
 
         if output:
             console.print()
-            console.print(
-                Panel(output, title="[bold]Output[/bold]", border_style="white")
-            )
+            console.print(Panel(output, title="[bold]Output[/bold]", border_style="white"))
 
     @classmethod
     def show_error(cls, message: str):
@@ -169,9 +165,7 @@ class DriftUI:
             except Exception:
                 time_str = entry.timestamp[:16]
 
-            query_text = (
-                entry.query[:40] + "…" if len(entry.query) > 40 else entry.query
-            )
+            query_text = entry.query[:40] + "…" if len(entry.query) > 40 else entry.query
 
             table.add_row(
                 time_str,

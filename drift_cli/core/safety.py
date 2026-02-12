@@ -19,29 +19,23 @@ class SafetyChecker:
         r"mkfs\.",
         r"dd\s+if=.*of=/dev/",
         r"dd\s+.*of=/dev/(sd|hd|nvme)",
-        
         # Dangerous downloads and execution
         r"curl[^\|]*\|\s*(sh|bash|zsh|python|ruby|perl)",
         r"wget[^\|]*\|\s*(sh|bash|zsh|python|ruby|perl)",
         r"<\(curl",  # process substitution with curl
         r"<\(wget",
-        
         # Fork bomb
         r":\(\)\{\s*:\|:&\s*\};:",
-        
         # Disk operations
         r"diskutil\s+(eraseDisk|eraseVolume)",
         r"fdisk\s+",
         r"parted\s+",
-        
         # Writing to raw devices
         r">\s*/dev/(sd|hd|nvme)",
         r"mv\s+.*\s+/dev/(sd|hd|nvme|null)",
-        
         # Dangerous permissions
         r"chmod\s+(-R\s+)?777\s+/",
         r"chown\s+-R\s+.*\s+/",
-        
         # Code execution
         r"python[23]?\s+-c\s+.*exec\s*\(",
         r"python[23]?\s+-c\s+.*eval\s*\(",
@@ -49,12 +43,10 @@ class SafetyChecker:
         r"ruby\s+-e\s+",
         r"node\s+-e\s+",
         r"php\s+-r\s+",
-        
         # Shell command injection patterns
         r"bash\s+-c\s+.*\$\(",  # Command substitution
         r"sh\s+-c\s+.*`",  # Backtick substitution
         r"eval\s+\$",  # eval with variable
-        
         # Crypto miners and malware patterns
         r"xmrig",
         r"cryptonight",
@@ -100,7 +92,7 @@ class SafetyChecker:
         r"docker\s+run",
         r"docker\s+exec",
         r">\s*",  # Any file redirection
-        r">>",     # Append redirection
+        r">>",  # Append redirection
     ]
 
     @classmethod
