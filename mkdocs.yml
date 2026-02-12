@@ -56,7 +56,6 @@ nav:
   - Security: security.md
   - Blog:
       - "Built with GitHub Copilot": blog/copilot-experience.md
-      - "DEV.to Challenge Post": blog/devto-post.md
 
 markdown_extensions:
   - admonition

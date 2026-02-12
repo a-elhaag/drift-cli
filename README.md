@@ -2,6 +2,8 @@
 
 A terminal-native, safety-first AI assistant that integrates directly into your shell. Powered by local LLMs via Ollama — no cloud dependency, full privacy.
 
+Docs: https://a-elhaag.github.io/drift-cli/
+
 ## Features
 
 - **Natural Language to Shell**: Press `Ctrl+Space` to transform natural language into safe, executable commands

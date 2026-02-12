@@ -113,4 +113,3 @@ drift suggest "show me the largest files in this directory"
 ```
 
 [:material-github: View on GitHub](https://github.com/a-elhaag/drift-cli){ .md-button .md-button--primary }
-[:material-dev-to: Read the DEV.to Post](devto-post.md){ .md-button }
