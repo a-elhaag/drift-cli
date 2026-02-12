@@ -59,9 +59,10 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null)
-REQUIRED_VERSION="3.9"
+PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
+PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
 
-if [[ ! "$PYTHON_VERSION" =~ ^3\.[9-9]+ ]] && [[ ! "$PYTHON_VERSION" =~ ^[4-9]\. ]]; then
+if [[ "$PYTHON_MAJOR" -lt 3 ]] || { [[ "$PYTHON_MAJOR" -eq 3 ]] && [[ "$PYTHON_MINOR" -lt 9 ]]; }; then
     print_error "Python 3.9+ is required, but Python $PYTHON_VERSION is installed"
     exit 1
 fi
