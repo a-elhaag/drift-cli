@@ -6,7 +6,7 @@ tags: devchallenge, github, copilot, cli
 cover_image: ""
 ---
 
-*This is a submission for the [GitHub Copilot CLI Challenge](https://dev.to/challenges/github-2026-01-21)*
+_This is a submission for the [GitHub Copilot CLI Challenge](https://dev.to/challenges/github-2026-01-21)_
 
 ## What I Built
 
@@ -22,7 +22,7 @@ You type something like `drift suggest "find all Python files modified in the la
 
 ### Why It Matters To Me
 
-I wanted a tool that makes the terminal feel intelligent *without* sacrificing safety or privacy. Every AI terminal tool I tried either required cloud API keys, couldn't undo mistakes, or would happily run `rm -rf /` if the LLM hallucinated. Drift is designed to be the opposite:
+I wanted a tool that makes the terminal feel intelligent _without_ sacrificing safety or privacy. Every AI terminal tool I tried either required cloud API keys, couldn't undo mistakes, or would happily run `rm -rf /` if the LLM hallucinated. Drift is designed to be the opposite:
 
 - **Safety-first**: 60+ blocklist patterns, 3-tier risk scoring, mandatory confirmation for dangerous ops
 - **Local-first**: Runs on Ollama, your data never leaves your machine
@@ -30,16 +30,16 @@ I wanted a tool that makes the terminal feel intelligent *without* sacrificing s
 
 ### Key Features
 
-| Feature | Description |
-|---------|-------------|
-| 🧠 Natural Language → Shell | `drift suggest "compress all logs older than 7 days"` |
-| 🛡️ Safety Engine | Blocklist, risk scoring (LOW/MEDIUM/HIGH), dry-run defaults |
-| ⏪ Undo System | File snapshots before every modification |
-| 📝 Memory | Learns your tool preferences and adapts over time |
-| ⚡ Slash Commands | `/git`, `/commit`, `/find`, `/test` — context-aware shortcuts |
-| 🔍 Explain | `drift explain "tar -czf archive.tar.gz src/"` |
-| 🩺 Doctor | `drift doctor` diagnoses your setup |
-| 🐳 Isolated Execution | Mock, sandbox, and Docker executor modes |
+| Feature                     | Description                                                   |
+| --------------------------- | ------------------------------------------------------------- |
+| 🧠 Natural Language → Shell | `drift suggest "compress all logs older than 7 days"`         |
+| 🛡️ Safety Engine            | Blocklist, risk scoring (LOW/MEDIUM/HIGH), dry-run defaults   |
+| ⏪ Undo System              | File snapshots before every modification                      |
+| 📝 Memory                   | Learns your tool preferences and adapts over time             |
+| ⚡ Slash Commands           | `/git`, `/commit`, `/find`, `/test` — context-aware shortcuts |
+| 🔍 Explain                  | `drift explain "tar -czf archive.tar.gz src/"`                |
+| 🩺 Doctor                   | `drift doctor` diagnoses your setup                           |
+| 🐳 Isolated Execution       | Mock, sandbox, and Docker executor modes                      |
 
 ### Tech Stack
 
@@ -101,10 +101,10 @@ $ /find    # → Smart file search with context awareness
 $ /test    # → Auto-detects project type, runs appropriate test command
 ```
 
-<!-- 
+<!--
 TODO: Replace with actual video recording.
 Record a 2-3 minute terminal session showing:
-1. drift suggest "find large files" 
+1. drift suggest "find large files"
 2. drift explain "du -sh * | sort -rh | head -10"
 3. drift suggest "delete all .pyc files" --dry-run
 4. drift memory show
@@ -126,7 +126,7 @@ I started with a rough idea — "terminal AI assistant with safety" — and Copi
 
 - Blocklist → Risk scoring → Dry-run preview → Confirmation → Snapshot → Execute → Undo
 
-This became the backbone of the project. Copilot generated the initial `SafetyChecker` class with regex blocklist patterns, and I iteratively hardened it by asking things like *"what other destructive shell patterns should be blocked?"* and *"add Docker injection prevention."*
+This became the backbone of the project. Copilot generated the initial `SafetyChecker` class with regex blocklist patterns, and I iteratively hardened it by asking things like _"what other destructive shell patterns should be blocked?"_ and _"add Docker injection prevention."_
 
 ### Code Generation & Iteration
 
@@ -160,7 +160,7 @@ In the final phase, I used Copilot to audit the entire project for production-re
 
 Without Copilot, this project would have taken significantly longer. The safety patterns alone — 60+ regex rules covering fork bombs, disk operations, crypto miners, base64 exploits — would have required extensive research. Copilot provided them as a starting point and I validated and refined them.
 
-The conversational workflow of *describe intent → get code → test → refine* made it feel less like coding and more like pair programming with a knowledgeable partner.
+The conversational workflow of _describe intent → get code → test → refine_ made it feel less like coding and more like pair programming with a knowledgeable partner.
 
 ---
 
