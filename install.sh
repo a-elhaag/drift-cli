@@ -108,27 +108,43 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Check for pipx
-if ! command -v pipx &> /dev/null; then
-    print_status "Installing pipx..."
-    python3 -m pip install --user pipx
-    python3 -m pipx ensurepath
-    # Add both possible pip --user bin directories to PATH
-    export PATH="$HOME/.local/bin:$HOME/Library/Python/$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')/bin:$PATH"
-fi
-
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Install Drift CLI using pipx
-if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
-    # Installing from source
-    print_status "Installing from source..."
-    python3 -m pipx install -e "$SCRIPT_DIR" --force
+# Check if venv module is available (required by pipx)
+USE_PIPX=true
+if ! python3 -c 'import venv' 2>/dev/null; then
+    print_warning "Python venv module not available, falling back to pip install"
+    USE_PIPX=false
+fi
+
+if $USE_PIPX; then
+    # Check for pipx
+    if ! command -v pipx &> /dev/null; then
+        print_status "Installing pipx..."
+        python3 -m pip install --user pipx
+        python3 -m pipx ensurepath
+        # Add both possible pip --user bin directories to PATH
+        export PATH="$HOME/.local/bin:$HOME/Library/Python/$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')/bin:$PATH"
+    fi
+
+    # Install Drift CLI using pipx
+    if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
+        print_status "Installing from source..."
+        python3 -m pipx install -e "$SCRIPT_DIR" --force
+    else
+        print_status "Installing from PyPI..."
+        python3 -m pipx install drift-cli --force
+    fi
 else
-    # Installing from PyPI (future)
-    print_status "Installing from PyPI..."
-    python3 -m pipx install drift-cli --force
+    # Fall back to pip install
+    if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
+        print_status "Installing from source with pip..."
+        python3 -m pip install -e "$SCRIPT_DIR"
+    else
+        print_status "Installing from PyPI with pip..."
+        python3 -m pip install drift-cli
+    fi
 fi
 
 print_success "Drift CLI installed"
