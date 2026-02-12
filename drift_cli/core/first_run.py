@@ -36,7 +36,9 @@ def run_setup_wizard():
     console.print("  Drift turns natural language into shell commands")
     console.print("  with built-in safety checks and undo support.")
     console.print()
-    console.print("[dim]  Powered by local LLMs via Ollama — your data stays on your machine.[/dim]")
+    console.print(
+        "[dim]  Powered by local LLMs via Ollama — your data stays on your machine.[/dim]"
+    )
     console.print()
 
     # Create config directory
@@ -69,20 +71,26 @@ def run_setup_wizard():
             console.print("[bold green]✓ Setup complete — Drift is ready![/bold green]")
         else:
             console.print()
-            console.print("[yellow]Setup incomplete. Run [bold]drift doctor[/bold] to retry.[/yellow]")
+            console.print(
+                "[yellow]Setup incomplete. Run [bold]drift doctor[/bold] to retry.[/yellow]"
+            )
     else:
         console.print()
-        console.print("[dim]Skipped. Run [bold]drift doctor[/bold] when you're ready.[/dim]")
+        console.print(
+            "[dim]Skipped. Run [bold]drift doctor[/bold] when you're ready.[/dim]"
+        )
 
     # Quick-start tips
     console.print()
-    console.print(Panel(
-        "[cyan]drift suggest[/cyan] [dim]\"list large files\"[/dim]     — get command suggestions\n"
-        "[cyan]drift explain[/cyan] [dim]\"tar -xzf a.tar.gz\"[/dim]   — explain a command\n"
-        "[cyan]drift find[/cyan] [dim]\"todo comments\"[/dim]           — smart file search\n"
-        "[cyan]drift doctor[/cyan]                          — check system health\n"
-        "[cyan]drift help[/cyan]                            — show all commands",
-        title="[bold]Quick Start[/bold]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            '[cyan]drift suggest[/cyan] [dim]"list large files"[/dim]     — get command suggestions\n'
+            '[cyan]drift explain[/cyan] [dim]"tar -xzf a.tar.gz"[/dim]   — explain a command\n'
+            '[cyan]drift find[/cyan] [dim]"todo comments"[/dim]           — smart file search\n'
+            "[cyan]drift doctor[/cyan]                          — check system health\n"
+            "[cyan]drift help[/cyan]                            — show all commands",
+            title="[bold]Quick Start[/bold]",
+            border_style="cyan",
+        )
+    )
     console.print()

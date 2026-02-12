@@ -58,7 +58,13 @@ class DriftUI:
         # Explanation (only with --verbose)
         if show_explanation and plan.explanation:
             console.print()
-            console.print(Panel(plan.explanation, title="[bold]Explanation[/bold]", border_style="blue"))
+            console.print(
+                Panel(
+                    plan.explanation,
+                    title="[bold]Explanation[/bold]",
+                    border_style="blue",
+                )
+            )
 
         # Affected files
         if plan.affected_files:
@@ -92,7 +98,9 @@ class DriftUI:
 
         if output:
             console.print()
-            console.print(Panel(output, title="[bold]Output[/bold]", border_style="white"))
+            console.print(
+                Panel(output, title="[bold]Output[/bold]", border_style="white")
+            )
 
     @classmethod
     def show_error(cls, message: str):
@@ -125,7 +133,9 @@ class DriftUI:
                 console.print(f"[bold]{q.question}[/bold]")
                 for i, option in enumerate(q.options, 1):
                     console.print(f"  {i}. {option}")
-                answer = Prompt.ask("Choice", choices=[str(i) for i in range(1, len(q.options) + 1)])
+                answer = Prompt.ask(
+                    "Choice", choices=[str(i) for i in range(1, len(q.options) + 1)]
+                )
                 answers[idx] = q.options[int(answer) - 1]
             else:
                 answer = Prompt.ask(f"[bold]{q.question}[/bold]")
@@ -153,12 +163,15 @@ class DriftUI:
 
             try:
                 from datetime import datetime
+
                 dt = datetime.fromisoformat(entry.timestamp)
                 time_str = dt.strftime("%Y-%m-%d %H:%M")
             except Exception:
                 time_str = entry.timestamp[:16]
 
-            query_text = entry.query[:40] + "…" if len(entry.query) > 40 else entry.query
+            query_text = (
+                entry.query[:40] + "…" if len(entry.query) > 40 else entry.query
+            )
 
             table.add_row(
                 time_str,

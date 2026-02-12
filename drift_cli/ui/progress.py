@@ -3,8 +3,8 @@
 from typing import Optional
 
 from rich.console import Console
-from rich.spinner import Spinner
 from rich.live import Live
+from rich.spinner import Spinner
 
 console = Console()
 

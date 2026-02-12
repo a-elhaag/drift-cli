@@ -35,7 +35,9 @@ console = Console()
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    query: str = typer.Argument(None, help="Natural language query (shortcut for 'drift suggest')"),
+    query: str = typer.Argument(
+        None, help="Natural language query (shortcut for 'drift suggest')"
+    ),
 ):
     """Drift — terminal-native, safety-first AI assistant."""
     # First-run setup wizard
@@ -162,7 +164,9 @@ def suggest(
             answers = DriftUI.ask_clarification(plan.clarification_needed)
             clarification_context = f"{context}\n\nClarifications:\n"
             for idx, answer in answers.items():
-                clarification_context += f"Q: {plan.clarification_needed[idx].question}\nA: {answer}\n"
+                clarification_context += (
+                    f"Q: {plan.clarification_needed[idx].question}\nA: {answer}\n"
+                )
             with ProgressSpinner("Re-analyzing..."):
                 plan = client.get_plan(query, clarification_context)
 
@@ -196,11 +200,17 @@ def suggest(
             exit_code, output, snapshot_id = executor.execute_plan(plan, dry_run=False)
             console.print()
             DriftUI.show_execution_result(exit_code, output)
-            history.add_entry(query, plan, executed=True, exit_code=exit_code, snapshot_id=snapshot_id)
+            history.add_entry(
+                query, plan, executed=True, exit_code=exit_code, snapshot_id=snapshot_id
+            )
             if memory:
-                memory.learn_from_execution(plan, executed=True, success=(exit_code == 0))
+                memory.learn_from_execution(
+                    plan, executed=True, success=(exit_code == 0)
+                )
             if snapshot_id and exit_code == 0:
-                console.print(f"[dim]Snapshot: {snapshot_id[:8]}… (drift undo to rollback)[/dim]")
+                console.print(
+                    f"[dim]Snapshot: {snapshot_id[:8]}… (drift undo to rollback)[/dim]"
+                )
         else:
             DriftUI.show_info("Cancelled")
             history.add_entry(query, plan, executed=False)
@@ -318,7 +328,9 @@ def cleanup(
     deleted = hist.cleanup_old_snapshots(keep=keep, max_age_days=days)
 
     if deleted > 0:
-        new_size = sum(f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file())
+        new_size = sum(
+            f.stat().st_size for f in snapshots_dir.rglob("*") if f.is_file()
+        )
         freed = total_mb - new_size / (1024 * 1024)
         DriftUI.show_success(f"Deleted {deleted} snapshots, freed {freed:.1f} MB")
     else:
@@ -329,8 +341,12 @@ def cleanup(
 def doctor():
     """Diagnose and fix common issues."""
     from drift_cli.core.auto_setup import (
-        install_ollama, is_model_available, is_ollama_installed,
-        is_ollama_running, pull_model, start_ollama,
+        install_ollama,
+        is_model_available,
+        is_ollama_installed,
+        is_ollama_running,
+        pull_model,
+        start_ollama,
     )
 
     console.print("[bold cyan]Drift Doctor[/bold cyan]\n")
@@ -387,7 +403,7 @@ def doctor():
 @app.command()
 def config():
     """View and change Drift settings interactively."""
-    from rich.prompt import Prompt, Confirm
+    from rich.prompt import Confirm, Prompt
 
     cm = get_config()
     cfg = cm.load()
@@ -397,10 +413,18 @@ def config():
     console.print(f"  [cyan]ollama_url[/cyan]     = {cfg.ollama_url}")
     console.print(f"  [cyan]temperature[/cyan]    = {cfg.temperature}")
     console.print(f"  [cyan]max_history[/cyan]    = {cfg.max_history}")
-    console.print(f"  [cyan]auto_install[/cyan]   = {'ON' if cfg.auto_install_ollama else 'OFF'}")
-    console.print(f"  [cyan]auto_start[/cyan]     = {'ON' if cfg.auto_start_ollama else 'OFF'}")
-    console.print(f"  [cyan]auto_pull[/cyan]      = {'ON' if cfg.auto_pull_model else 'OFF'}")
-    console.print(f"  [cyan]auto_snapshot[/cyan]  = {'ON' if cfg.auto_snapshot else 'OFF'}")
+    console.print(
+        f"  [cyan]auto_install[/cyan]   = {'ON' if cfg.auto_install_ollama else 'OFF'}"
+    )
+    console.print(
+        f"  [cyan]auto_start[/cyan]     = {'ON' if cfg.auto_start_ollama else 'OFF'}"
+    )
+    console.print(
+        f"  [cyan]auto_pull[/cyan]      = {'ON' if cfg.auto_pull_model else 'OFF'}"
+    )
+    console.print(
+        f"  [cyan]auto_snapshot[/cyan]  = {'ON' if cfg.auto_snapshot else 'OFF'}"
+    )
     console.print()
 
     if not Confirm.ask("Edit settings?", default=False):
@@ -412,22 +436,28 @@ def config():
     new_url = Prompt.ask("Ollama URL", default=cfg.ollama_url)
     new_temp = Prompt.ask("Temperature (0.0–1.0)", default=str(cfg.temperature))
     new_hist = Prompt.ask("Max history entries", default=str(cfg.max_history))
-    new_auto_install = Confirm.ask("Auto-install Ollama?", default=cfg.auto_install_ollama)
+    new_auto_install = Confirm.ask(
+        "Auto-install Ollama?", default=cfg.auto_install_ollama
+    )
     new_auto_start = Confirm.ask("Auto-start Ollama?", default=cfg.auto_start_ollama)
     new_auto_pull = Confirm.ask("Auto-pull model?", default=cfg.auto_pull_model)
-    new_snapshot = Confirm.ask("Auto-snapshot before execution?", default=cfg.auto_snapshot)
+    new_snapshot = Confirm.ask(
+        "Auto-snapshot before execution?", default=cfg.auto_snapshot
+    )
 
-    cm.save(DriftConfig(
-        model=new_model,
-        ollama_url=new_url,
-        temperature=float(new_temp),
-        top_p=cfg.top_p,
-        max_history=int(new_hist),
-        auto_snapshot=new_snapshot,
-        auto_install_ollama=new_auto_install,
-        auto_start_ollama=new_auto_start,
-        auto_pull_model=new_auto_pull,
-    ))
+    cm.save(
+        DriftConfig(
+            model=new_model,
+            ollama_url=new_url,
+            temperature=float(new_temp),
+            top_p=cfg.top_p,
+            max_history=int(new_hist),
+            auto_snapshot=new_snapshot,
+            auto_install_ollama=new_auto_install,
+            auto_start_ollama=new_auto_start,
+            auto_pull_model=new_auto_pull,
+        )
+    )
     DriftUI.show_success("Settings saved to ~/.drift/config.json")
 
 
@@ -462,6 +492,7 @@ def uninstall():
         console.print()
         if typer.confirm("Also uninstall Ollama?", default=False):
             import platform
+
             system = platform.system().lower()
 
             try:
@@ -482,7 +513,10 @@ def uninstall():
                                 path.unlink()
                     DriftUI.show_success("Ollama removed")
                 elif system == "linux":
-                    subprocess.run(["sudo", "rm", "-f", "/usr/local/bin/ollama"], capture_output=True)
+                    subprocess.run(
+                        ["sudo", "rm", "-f", "/usr/local/bin/ollama"],
+                        capture_output=True,
+                    )
                     shutil.rmtree(Path.home() / ".ollama", ignore_errors=True)
                     DriftUI.show_success("Ollama removed")
                 else:
@@ -520,45 +554,51 @@ def _show_help():
     console.print(f"\n[bold cyan]Drift CLI[/bold cyan] [dim]v{__version__}[/dim]")
     console.print("[dim]Terminal-native, safety-first AI assistant[/dim]\n")
 
-    console.print(Panel(
-        "[cyan]drift[/cyan] [dim]\"list large files\"[/dim]     Quick shortcut (same as suggest)\n"
-        "[cyan]drift suggest[/cyan] [dim]<query>[/dim]       AI command suggestions\n"
-        "[cyan]drift explain[/cyan] [dim]<cmd>[/dim]         Explain a shell command\n"
-        "[cyan]drift find[/cyan] [dim]<query>[/dim]          Smart file search\n"
-        "[cyan]drift history[/cyan]                View past commands\n"
-        "[cyan]drift again[/cyan]                  Re-run last command\n"
-        "[cyan]drift undo[/cyan]                   Rollback last execution\n"
-        "[cyan]drift config[/cyan]                 View/edit settings\n"
-        "[cyan]drift doctor[/cyan]                 System health check\n"
-        "[cyan]drift cleanup[/cyan]                Free snapshot storage\n"
-        "[cyan]drift memory show[/cyan]            View learned preferences\n"
-        "[cyan]drift setup[/cyan]                  Run setup wizard\n"
-        "[cyan]drift uninstall[/cyan]              Remove Drift & data\n"
-        "[cyan]drift version[/cyan]                Show version",
-        title="[bold]Commands[/bold]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            '[cyan]drift[/cyan] [dim]"list large files"[/dim]     Quick shortcut (same as suggest)\n'
+            "[cyan]drift suggest[/cyan] [dim]<query>[/dim]       AI command suggestions\n"
+            "[cyan]drift explain[/cyan] [dim]<cmd>[/dim]         Explain a shell command\n"
+            "[cyan]drift find[/cyan] [dim]<query>[/dim]          Smart file search\n"
+            "[cyan]drift history[/cyan]                View past commands\n"
+            "[cyan]drift again[/cyan]                  Re-run last command\n"
+            "[cyan]drift undo[/cyan]                   Rollback last execution\n"
+            "[cyan]drift config[/cyan]                 View/edit settings\n"
+            "[cyan]drift doctor[/cyan]                 System health check\n"
+            "[cyan]drift cleanup[/cyan]                Free snapshot storage\n"
+            "[cyan]drift memory show[/cyan]            View learned preferences\n"
+            "[cyan]drift setup[/cyan]                  Run setup wizard\n"
+            "[cyan]drift uninstall[/cyan]              Remove Drift & data\n"
+            "[cyan]drift version[/cyan]                Show version",
+            title="[bold]Commands[/bold]",
+            border_style="cyan",
+        )
+    )
 
-    console.print(Panel(
-        "[cyan]/git[/cyan]    Next git action     [cyan]/commit[/cyan]  Smart commit\n"
-        "[cyan]/find[/cyan]   Search files        [cyan]/fix[/cyan]     Fix recent errors\n"
-        "[cyan]/test[/cyan]   Run project tests   [cyan]/build[/cyan]   Build project\n"
-        "[cyan]/dev[/cyan]    Start dev server    [cyan]/clean[/cyan]   Clean artifacts\n"
-        "[cyan]/deps[/cyan]   Check dependencies  [cyan]/lint[/cyan]    Run linter\n"
-        "[cyan]/tree[/cyan]   Directory tree      [cyan]/tips[/cyan]    Workflow tips\n"
-        "\n[dim]Usage: drift \"/git\" or drift suggest \"/commit\"[/dim]",
-        title="[bold]Slash Commands[/bold]",
-        border_style="yellow",
-    ))
+    console.print(
+        Panel(
+            "[cyan]/git[/cyan]    Next git action     [cyan]/commit[/cyan]  Smart commit\n"
+            "[cyan]/find[/cyan]   Search files        [cyan]/fix[/cyan]     Fix recent errors\n"
+            "[cyan]/test[/cyan]   Run project tests   [cyan]/build[/cyan]   Build project\n"
+            "[cyan]/dev[/cyan]    Start dev server    [cyan]/clean[/cyan]   Clean artifacts\n"
+            "[cyan]/deps[/cyan]   Check dependencies  [cyan]/lint[/cyan]    Run linter\n"
+            "[cyan]/tree[/cyan]   Directory tree      [cyan]/tips[/cyan]    Workflow tips\n"
+            '\n[dim]Usage: drift "/git" or drift suggest "/commit"[/dim]',
+            title="[bold]Slash Commands[/bold]",
+            border_style="yellow",
+        )
+    )
 
-    console.print(Panel(
-        "[dim]-e, --execute[/dim]    Run without confirmation\n"
-        "[dim]-d, --dry-run[/dim]    Preview only, don't execute\n"
-        "[dim]-v, --verbose[/dim]    Show detailed explanation\n"
-        "[dim]--no-memory[/dim]      Disable personalization",
-        title="[bold]Flags (for suggest)[/bold]",
-        border_style="dim",
-    ))
+    console.print(
+        Panel(
+            "[dim]-e, --execute[/dim]    Run without confirmation\n"
+            "[dim]-d, --dry-run[/dim]    Preview only, don't execute\n"
+            "[dim]-v, --verbose[/dim]    Show detailed explanation\n"
+            "[dim]--no-memory[/dim]      Disable personalization",
+            title="[bold]Flags (for suggest)[/bold]",
+            border_style="dim",
+        )
+    )
     console.print()
 
 
