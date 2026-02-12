@@ -33,6 +33,7 @@ _SUBCOMMANDS = {
     "doctor",
     "config",
     "uninstall",
+    "update",
     "version",
     "setup",
     "memory",
@@ -589,7 +590,102 @@ def setup():
     run_setup_wizard()
 
 
-def _show_help():
+@app.command()
+def update():
+    """Update Drift CLI to the latest version."""
+    import subprocess
+
+    # Find the repo root — this file lives at drift_cli/cli.py inside the repo
+    repo_dir = Path(__file__).resolve().parent.parent
+
+    git_dir = repo_dir / ".git"
+    if not git_dir.exists():
+        console.print(
+            "[red]✗ Cannot auto-update: Drift was not installed from a git clone.[/red]"
+        )
+        console.print(
+            "  [dim]Reinstall with:[/dim]  git clone https://github.com/a-elhaag/drift-cli.git && cd drift-cli && pip install -e ."
+        )
+        raise typer.Exit(1)
+
+    console.print("[cyan]🔄 Checking for updates...[/cyan]")
+
+    try:
+        # Fetch latest from remote
+        subprocess.run(
+            ["git", "fetch", "--quiet"],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        # Check if we're behind
+        status = subprocess.run(
+            ["git", "status", "-uno", "--porcelain=v1"],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        behind = subprocess.run(
+            ["git", "rev-list", "--count", "HEAD..@{u}"],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        commits_behind = int(behind.stdout.strip() or "0")
+
+        if commits_behind == 0:
+            console.print("[green]✓ Drift CLI is already up to date.[/green]")
+            return
+
+        console.print(
+            f"[yellow]  {commits_behind} new commit{'s' if commits_behind != 1 else ''} available[/yellow]"
+        )
+
+        # Pull
+        result = subprocess.run(
+            ["git", "pull", "--ff-only"],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+        if result.returncode != 0:
+            console.print(
+                "[red]✗ Update failed (merge conflict or diverged branch).[/red]"
+            )
+            console.print(f"  [dim]{result.stderr.strip()}[/dim]")
+            raise typer.Exit(1)
+
+        # Reinstall to pick up any new dependencies
+        pip_result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-e", ".", "--quiet"],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+
+        if pip_result.returncode != 0:
+            console.print("[yellow]⚠ Code updated but pip install had issues:[/yellow]")
+            console.print(f"  [dim]{pip_result.stderr.strip()}[/dim]")
+        else:
+            from drift_cli import __version__
+
+            console.print(f"[green]✓ Updated to Drift CLI v{__version__}[/green]")
+
+    except subprocess.TimeoutExpired:
+        console.print("[red]✗ Update timed out. Check your network connection.[/red]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]✗ Update failed: {e}[/red]")
+        raise typer.Exit(1)
     """Show a rich help screen with all commands."""
     from drift_cli import __version__
 
@@ -610,6 +706,7 @@ def _show_help():
             "[cyan]drift cleanup[/cyan]                Free snapshot storage\n"
             "[cyan]drift memory show[/cyan]            View learned preferences\n"
             "[cyan]drift setup[/cyan]                  Run setup wizard\n"
+            "[cyan]drift update[/cyan]                 Update to latest version\n"
             "[cyan]drift uninstall[/cyan]              Remove Drift & data\n"
             "[cyan]drift version[/cyan]                Show version",
             title="[bold]Commands[/bold]",
