@@ -3,6 +3,9 @@
 <p style="font-size: 1.25em; color: #aaa;">
 A terminal-native, safety-first AI assistant that integrates directly into your shell.<br>
 Powered by local LLMs via Ollama — no cloud dependency, full privacy.
+
+Running `drift` with no arguments now opens a rich help dashboard with grouped commands, slash action panels, and flag summaries.
+
 </p>
 
 ---
@@ -90,13 +93,13 @@ drift doctor
 
   ***
 
-  Learns your tool preferences and adapts suggestions over time.
+  Learns tool preferences, shows usage stats, and surfaces insights via `drift memory show`, `drift memory stats`, and `drift memory insights`.
 
 - :zap:{ .lg .middle } **Slash Commands**
 
   ***
 
-  `/git`, `/commit`, `/find`, `/test` — context-aware shortcuts for common workflows.
+  `/git`, `/commit`, `/status`, `/clean`, `/lint`, `/tips`, and more — all captured in [Slash commands](guide/slash-commands.md).
 
 - :lock:{ .lg .middle } **Local-First & Private**
 
@@ -105,6 +108,17 @@ drift doctor
   Runs entirely on your machine via Ollama. Your data never leaves your computer.
 
 </div>
+
+## 🧰 System & personalization
+
+Use Drift's management commands to keep your environment healthy and your preferences portable.
+
+- `drift doctor` verifies Ollama, pulls the default `qwen2.5-coder:1.5b` model if missing, and reports `~/.drift` status.
+- `drift config` interactively edits model settings, toggles auto-install/start/pull, and changes snapshot or idle behavior.
+- `drift setup`, `drift update`, and `drift uninstall` reboot the wizard, self-update the git clone + pip install, or tear down Drift/Ollama entirely.
+- `drift memory export/import` moves personalization between machines, `drift memory projects` lists per-project data, and `drift memory reset`/`insights` keep you in control.
+
+Read the [Command reference](guide/commands.md) and [Slash commands](guide/slash-commands.md) for the full CLI surface.
 
 ## Built with GitHub Copilot
 

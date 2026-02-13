@@ -29,6 +29,16 @@ Shows your tool preferences, risk patterns, and workflow insights.
 drift memory stats
 ```
 
+Reports totals for queries, executions, and success rate and shows the risk distribution of executed plans so you can align Drift's default behavior with your comfort level.
+
+### Personalized Insights
+
+```bash
+drift memory insights
+```
+
+Displays the exact prompt context sent to the LLM, surfaces pattern-based suggestions, and highlights learning opportunities from recent command history.
+
 ### Reset Everything
 
 ```bash
@@ -38,6 +48,8 @@ drift memory reset
 !!! note
 This permanently deletes all learned preferences. Drift starts fresh.
 
+Add `--yes` to skip the confirmation prompt if you are scripting a reset.
+
 ### Export / Import
 
 ```bash
@@ -46,7 +58,10 @@ drift memory export drift-memory.json
 
 # Restore on another machine
 drift memory import drift-memory.json
+drift memory import drift-memory.json --merge
 ```
+
+`--merge` combines exported preferences with your existing data (favorite tools, avoided patterns, and workflows are unioned instead of replaced).
 
 ### View Projects
 

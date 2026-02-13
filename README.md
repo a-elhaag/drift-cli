@@ -6,13 +6,14 @@ Docs: https://a-elhaag.github.io/drift-cli/
 
 ## Features
 
-- **Natural Language to Shell**: Press `Ctrl+Space` to transform natural language into safe, executable commands
-- **Safety First**: Dry-run previews, risk scoring, blocklist validation, and confirmation prompts
-- **Local-First**: Runs entirely on your machine using Ollama (no API keys, no cloud)
-- **Smart Workflows**: Plan → Preview → Confirm → Execute → Explain → Undo
-- **Slash Commands**: Quick context-aware actions (`/git`, `/commit`, `/find`, `/test`, etc.)
-- **Memory System**: Learns your preferences and adapts suggestions over time
-- **ZSH Integration**: Seamless hotkey binding for instant access
+- **Natural Language to Shell**: Press `Ctrl+Space` to translate English into executable commands with rich previews.
+- **Safety First**: Automatic blocklists, risk scoring, dry-run defaults, and confirmation prompts before every execution.
+- **Local-First**: Runs entirely on your machine via Ollama (no API keys, no cloud tracking).
+- **Smart Workflows**: Plan → Preview → Confirm → Execute → Explain → Undo keeps every run recoverable.
+- **Slash Commands**: `/git`, `/commit`, `/status`, `/push`, `/pull`, `/find`, `/recent`, `/large`, `/tree`, `/fix`, `/clean`, `/deps`, `/port`, `/test`, `/build`, `/dev`, `/lint`, `/help`, `/tips` — all dispatched from the terminal prompt with contextual awareness.
+- **Memory System**: Tracks your preferred tools, risk tolerance, and workflows via `drift memory show`, `drift memory stats`, `drift memory insights`, and portable export/import utilities.
+- **System & Maintenance**: `drift doctor`, `drift config`, `drift setup`, `drift update`, `drift uninstall`, and `drift version` keep your environment healthy and configurable.
+- **ZSH Integration**: Seamless hotkey binding for Ctrl+Space and slash command interception.
 
 ## Quick Start
 
@@ -32,35 +33,59 @@ drift doctor
 
 ## Commands
 
-| Command                   | Description                           |
-| ------------------------- | ------------------------------------- |
-| `drift suggest <query>`   | Get AI-powered command suggestions    |
-| `drift find <query>`      | Smart file and content search         |
-| `drift explain <command>` | Understand what a command does        |
-| `drift history`           | View your Drift command history       |
-| `drift again`             | Re-run the last Drift command         |
-| `drift undo`              | Restore files from the last operation |
-| `drift cleanup`           | Remove old snapshots to free space    |
-| `drift doctor`            | Diagnose common terminal issues       |
-| `drift memory show`       | See what Drift has learned about you  |
-| `drift memory stats`      | Usage statistics                      |
-| `drift memory reset`      | Reset learned preferences             |
-| `drift version`           | Show version                          |
+### Core AI
+
+| Command                   | Description                                                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `drift suggest <query>`   | Natural language → shell with `--dry-run`, `--execute`, `--verbose`, `--no-memory` flags and slash-command support (`drift /help` for a live catalog). |
+| `drift find <query>`      | Safe, read-only file and content search powered by the same reasoning stack.                                                                           |
+| `drift explain <command>` | Ask the LLM to explain what any shell command does before you run it.                                                                                  |
+
+### Workflow & history
+
+| Command                                        | Description                                                                 |
+| ---------------------------------------------- | --------------------------------------------------------------------------- |
+| `drift history [--limit N]`                    | Browse recent queries, outcomes, and snapshots.                             |
+| `drift again`                                  | Re-run the last Drift query (great for retries after tweaking options).     |
+| `drift undo`                                   | Restore files from the most recent snapshot (requires an executed command). |
+| `drift cleanup [--keep N] [--days D] [--auto]` | Delete old snapshots to free space while keeping the newest backups.        |
+
+### System & maintenance
+
+| Command           | Description                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `drift doctor`    | Verifies Ollama installation, server, and model availability (auto-install/start/pull if enabled).                                |
+| `drift config`    | Interactively tune settings (`model`, `temperature`, `auto_install_ollama`, `auto_snapshot`, idle shutdown, etc.).                |
+| `drift setup`     | Re-run the first-time wizard to reset defaults and bootstrapping.                                                                 |
+| `drift update`    | Fetch the latest commits, reinstall via `pip install -e .`, and report the new version (works when Drift was installed from git). |
+| `drift uninstall` | Remove `~/.drift`, optionally uninstall Ollama, and remind you to `pip uninstall drift-cli`.                                      |
+| `drift version`   | Print the installed Drift CLI version.                                                                                            |
+
+### Memory & personalization
+
+| Command                                | Description                                                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `drift memory show`                    | See your learned preferences, workflows, and current context.                                                       |
+| `drift memory stats`                   | Usage totals plus risk distribution for executed plans.                                                             |
+| `drift memory insights`                | Reveal the context Drift sends to Ollama, plus pattern-based suggestions and learning opportunities.                |
+| `drift memory reset [--yes]`           | Wipe learned preferences while keeping the raw history.                                                             |
+| `drift memory export <file>`           | Save your preferences/patterns to a JSON file for backup or sharing.                                                |
+| `drift memory import <file> [--merge]` | Restore preferences; `--merge` unionizes favorite tools, avoided patterns, and workflows instead of replacing them. |
+| `drift memory projects`                | List every project-specific preference file under `~/.drift/projects/`.                                             |
 
 ## Slash Commands
 
-Type a slash command in your terminal and press Enter:
+Slash commands are triggered by typing `/`-prefixed queries (requires ZSH integration). Drift intercepts the command, gathers context (git status, preferred tools, project type), and generates a safe plan via the slash registry.
 
-| Command           | Description                                   |
-| ----------------- | --------------------------------------------- |
-| `/git`            | Suggest next git action based on repo status  |
-| `/commit`         | Smart commit with AI-generated message        |
-| `/find <pattern>` | Quick file/content search                     |
-| `/test`           | Run project tests (auto-detects project type) |
-| `/build`          | Build the project                             |
-| `/clean`          | Clean project artifacts safely                |
-| `/fix`            | Suggest fixes for recent errors               |
-| `/help`           | Show all available slash commands             |
+| Category | Commands                                       |
+| -------- | ---------------------------------------------- |
+| Git      | `/git`, `/commit`, `/status`, `/push`, `/pull` |
+| Files    | `/find`, `/recent`, `/large`, `/tree`          |
+| System   | `/fix`, `/clean`, `/deps`, `/port`             |
+| Workflow | `/test`, `/build`, `/dev`, `/lint`             |
+| Meta     | `/help`, `/tips`                               |
+
+Use `/help` for the live catalog, and `/tips` for personalized workflow suggestions driven by your history. All slashes honor Drift's safety engine, including the plan preview, risk badges, and confirmation prompts.
 
 ## Safe Execution
 
