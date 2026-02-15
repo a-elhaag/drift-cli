@@ -128,12 +128,30 @@ def _show_help():
 
     console.print(
         Panel(
-            "[cyan]/git[/cyan]    Next git action     [cyan]/commit[/cyan]  Smart commit\n"
-            "[cyan]/find[/cyan]   Search files        [cyan]/fix[/cyan]     Fix recent errors\n"
-            "[cyan]/test[/cyan]   Run project tests   [cyan]/build[/cyan]   Build project\n"
-            "[cyan]/dev[/cyan]    Start dev server    [cyan]/clean[/cyan]   Clean artifacts\n"
-            "[cyan]/deps[/cyan]   Check dependencies  [cyan]/lint[/cyan]    Run linter\n"
-            "[cyan]/tree[/cyan]   Directory tree      [cyan]/tips[/cyan]    Workflow tips\n"
+            "[bold cyan]Git[/bold cyan]\n"
+            "[cyan]🔀 /git[/cyan]       Suggest next git action\n"
+            "[cyan]📝 /commit[/cyan]    Smart conventional commit\n"
+            "[cyan]📊 /status[/cyan]    Explain git status\n"
+            "[cyan]⬆️ /push[/cyan]      Safe push workflow\n"
+            "[cyan]⬇️ /pull[/cyan]      Safe pull/sync\n\n"
+            "[bold cyan]Files[/bold cyan]\n"
+            "[cyan]🔍 /find[/cyan]     Smart file search\n"
+            "[cyan]🕐 /recent[/cyan]    Recently modified files\n"
+            "[cyan]📦 /large[/cyan]     Find large files\n"
+            "[cyan]🌳 /tree[/cyan]      Directory structure\n\n"
+            "[bold cyan]System[/bold cyan]\n"
+            "[cyan]🔧 /fix[/cyan]      Suggest fixes for errors\n"
+            "[cyan]🧹 /clean[/cyan]     Clean project artifacts\n"
+            "[cyan]📚 /deps[/cyan]      Check dependencies\n"
+            "[cyan]🔌 /port[/cyan]      Check port usage\n\n"
+            "[bold cyan]Workflow[/bold cyan]\n"
+            "[cyan]🧪 /test[/cyan]      Run project tests\n"
+            "[cyan]🔨 /build[/cyan]     Build project\n"
+            "[cyan]🚀 /dev[/cyan]       Start dev server\n"
+            "[cyan]✨ /lint[/cyan]      Run linter\n\n"
+            "[bold cyan]Meta[/bold cyan]\n"
+            "[cyan]❓ /help[/cyan]      Show slash command catalog\n"
+            "[cyan]💡 /tips[/cyan]      Personalized workflow tips\n"
             "\n[dim]Usage: drift /git  or  drift suggest /commit[/dim]",
             title="[bold]Slash Commands[/bold]",
             border_style="yellow",

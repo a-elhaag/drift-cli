@@ -12,16 +12,10 @@ Running `drift` with no arguments now opens a rich help dashboard with grouped c
 
 ## :rocket: What is Drift?
 
-Drift turns plain English into safe, executable shell commands. You describe what you want, and Drift:
-
-1. Queries a **local LLM** (via Ollama — no cloud, no API keys)
-2. Generates a structured **execution plan** with risk assessment
-3. Shows a **dry-run preview** with color-coded risk badges
-4. Asks for **confirmation** before executing anything
-5. Takes a **file snapshot** so you can `drift undo` if needed
+Drift turns plain English into safe, executable shell commands. Just describe what you want, no fancy syntax needed:
 
 ```bash
-$ drift suggest "find all Python files modified in the last 7 days"
+$ drift find all python files modified in the last 7 days
 
 ╭─ Plan ──────────────────────────────────────────────────────╮
 │  Summary: Find recently modified Python files               │
@@ -32,6 +26,14 @@ $ drift suggest "find all Python files modified in the last 7 days"
 ╰──────────────────────────────────────────────────────────────╯
 Execute? [y/N]:
 ```
+
+Then Drift:
+
+1. Queries a **local LLM** (via Ollama — no cloud, no API keys)
+2. Generates a structured **execution plan** with risk assessment
+3. Shows a **dry-run preview** with color-coded risk badges
+4. Asks for **confirmation** before executing anything
+5. Takes a **file snapshot** so you can `drift undo` if needed
 
 ## :shield: Safety First
 
@@ -56,9 +58,10 @@ pip install -e .
 # Make sure Ollama is running
 ollama pull qwen2.5-coder:1.5b
 
-# Try it
-drift suggest "show disk usage by folder"
-drift explain "tar -czf archive.tar.gz src/"
+# Just use natural language queries:
+drift what is the time now
+drift compress all logs older than 7 days
+drift explain tar -czf archive.tar.gz src/
 drift doctor
 ```
 
@@ -73,9 +76,11 @@ drift doctor
 
   ***
 
-  Describe what you want in plain English. Drift generates the right command.
+  Just describe what you want in plain English—no syntax needed. Drift generates the right command.
 
-  `drift suggest "compress all logs older than 7 days"`
+  `drift compress all logs older than 7 days`
+  `drift what is the time now`
+  `drift show me all python files on my laptop`
 
 - :shield:{ .lg .middle } **Safety Engine**
 

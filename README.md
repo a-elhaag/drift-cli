@@ -24,7 +24,10 @@ cd drift-cli
 pip install -e .
 
 # Just run it — Drift auto-installs Ollama & pulls the model on first use
-drift suggest find all python files modified today
+# Natural language queries work directly:
+drift find all python files modified today
+drift what is the time now
+drift show me all the python files on my laptop
 drift explain tar -czf archive.tar.gz src/
 drift doctor
 ```
@@ -35,11 +38,12 @@ drift doctor
 
 ### Core AI
 
-| Command                   | Description                                                                                                                                            |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `drift suggest <query>`   | Natural language → shell with `--dry-run`, `--execute`, `--verbose`, `--no-memory` flags and slash-command support (`drift /help` for a live catalog). |
-| `drift find <query>`      | Safe, read-only file and content search powered by the same reasoning stack.                                                                           |
-| `drift explain <command>` | Ask the LLM to explain what any shell command does before you run it.                                                                                  |
+| Command                   | Description                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `drift <query>`           | **Any natural language query** — automatically translates to shell commands with `--dry-run`, `--execute`, `--verbose`, `--no-memory` flags. |
+| `drift suggest <query>`   | Explicit suggest mode (same as `drift <query>`). Supports slash-command shortcuts (`drift /help` for the live catalog).                      |
+| `drift find <query>`      | Safe, read-only file and content search powered by the same reasoning stack.                                                                 |
+| `drift explain <command>` | Ask the LLM to explain what any shell command does before you run it.                                                                        |
 
 ### Workflow & history
 
@@ -63,15 +67,15 @@ drift doctor
 
 ### Memory & personalization
 
-| Command                                | Description                                                                                                         |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `drift memory show`                    | See your learned preferences, workflows, and current context.                                                       |
-| `drift memory stats`                   | Usage totals plus risk distribution for executed plans.                                                             |
-| `drift memory insights`                | Reveal the context Drift sends to Ollama, plus pattern-based suggestions and learning opportunities.                |
-| `drift memory reset [--yes]`           | Wipe learned preferences while keeping the raw history.                                                             |
-| `drift memory export <file>`           | Save your preferences/patterns to a JSON file for backup or sharing.                                                |
-| `drift memory import <file> [--merge]` | Restore preferences; `--merge` unionizes favorite tools, avoided patterns, and workflows instead of replacing them. |
-| `drift memory projects`                | List every project-specific preference file under `~/.drift/projects/`.                                             |
+| Command                                   | Description                                                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `drift memory show`                       | See your learned preferences, workflows, and current context.                                                       |
+| `drift memory stats`                      | Usage totals plus risk distribution for executed plans.                                                             |
+| `drift memory insights`                   | Reveal the context Drift sends to Ollama, plus pattern-based suggestions and learning opportunities.                |
+| `drift memory reset [--yes/-y]`           | Wipe learned preferences while keeping the raw history. Use `--yes` to skip confirmation.                           |
+| `drift memory export <file>`              | Save your preferences/patterns to a JSON file for backup or sharing.                                                |
+| `drift memory import <file> [--merge/-m]` | Restore preferences; `--merge` unionizes favorite tools, avoided patterns, and workflows instead of replacing them. |
+| `drift memory projects`                   | List every project-specific preference file under `~/.drift/projects/`.                                             |
 
 ## Slash Commands
 

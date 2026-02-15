@@ -46,7 +46,8 @@ nav:
       - Safe Execution: guide/safe-execution.md
       - Memory System: guide/memory.md
   - Architecture:
-      - Overview: architecture/overview.md
+      - Overview: architecture/overview.md 
+       
       - Safety Engine: architecture/safety.md
       - LLM Integration: architecture/llm.md
   - Development:

@@ -2,9 +2,22 @@
 
 ## AI-powered core commands
 
+### Natural Language Queries (Recommended)
+
+The simplest way to use Drift is to just type what you want:
+
+```bash
+drift what is the time now
+drift show me all python files modified today
+drift reorganize my project --dry-run
+drift explain tar -czf archive.tar.gz src/
+```
+
+Drift automatically detects what you mean and translates it to shell commands. No need to remember command syntax!
+
 ### `drift suggest <query>`
 
-Translate natural language into safe shell commands. Accepts a plain sentence or a slash command (start with `/`).
+Explicitly request command suggestions. Same as typing `drift <query>` but with an explicit command name:
 
 ```bash
 drift suggest "find all Python files modified today" --dry-run

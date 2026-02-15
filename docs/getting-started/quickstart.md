@@ -2,10 +2,18 @@
 
 After [installing Drift](installation.md), try these commands to get a feel for how it works.
 
-## Your First Suggestion
+## Your First Command
+
+Just type a natural language query — Drift understands what you want:
 
 ```bash
-drift suggest find all python files modified today
+drift what is the time now
+```
+
+or
+
+```bash
+drift find all python files modified today
 ```
 
 Drift queries the local LLM, generates a plan, and shows you a preview:
@@ -28,7 +36,7 @@ Type `y` to run it, or `n` to cancel.
 Not sure you trust it yet? Use `--dry-run`:
 
 ```bash
-drift suggest reorganize my project --dry-run
+drift reorganize my project --dry-run
 ```
 
 This shows the plan but **never executes anything** — no matter what you type.
